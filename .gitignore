@@ -1,0 +1,8 @@
+# macOS artifacts
+**/.DS_Store
+
+# Maven artifacts
+target
+
+# Environment variables
+src/main/java/com/csce331/common/DatabaseSetup.java
