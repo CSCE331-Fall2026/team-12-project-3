@@ -1,0 +1,13 @@
+DROP TABLE IF EXISTS order_utensils;
+DROP TABLE IF EXISTS menu_ingredients;
+DROP TABLE IF EXISTS order_menu;
+DROP TABLE IF EXISTS utensils;
+DROP TABLE IF EXISTS inventory;
+DROP TABLE IF EXISTS ingredients;
+DROP TABLE IF EXISTS menu_items;
+DROP TABLE IF EXISTS orders;
+DROP TYPE IF EXISTS payment_type;
+DROP TYPE IF EXISTS menu_category;
+DROP TYPE IF EXISTS size_category;
+DROP TYPE IF EXISTS inventory_location;
+DROP TYPE IF EXISTS ingredient_unit;
