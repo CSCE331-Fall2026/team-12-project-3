@@ -25,13 +25,11 @@ import com.csce331.common.ExceptionLogger;
  * inventory items, adjusting their restock thresholds, and end-of-day
  * expiration handling.
  *
+ * TODO: Refactoring has broken the ENTIRE class, so fix this as needed
+ *
  * @author Kedar Panchal
  */
 public class InventoryManager extends DatabaseConnector {
-    /** The loaded ingredients, keyed by name. */
-    private Map<String, Ingredient> ingredients;
-    /** The loaded utensils, keyed by name. */
-    private Map<String, Utensil> utensils;
 
     /**
      * Creates an inventory manager, opening a database connection and loading
@@ -39,123 +37,6 @@ public class InventoryManager extends DatabaseConnector {
      */
     public InventoryManager() {
         super();
-
-        this.ingredients = new HashMap<>();
-        this.utensils = new HashMap<>();
-
-        this.loadIngredients();
-        this.loadUtensils();
-    }
-
-    /**
-     * Loads every ingredient from the database into the in-memory inventory,
-     * exiting the application if the query fails.
-     */
-    private void loadIngredients() {
-        Statement ingredientStatement = null;
-        try {
-            ingredientStatement = this.createStatement();
-        } catch (Exception e) {
-            ExceptionLogger.logException(e);
-            System.exit(0);
-        }
-
-        ResultSet ingredientResultSet = null;
-        try {
-            ingredientResultSet = ingredientStatement.executeQuery("SELECT * FROM ingredients");
-        } catch (Exception e) {
-            ExceptionLogger.logException(e);
-            System.exit(0);
-        }
-
-        try {
-            while (ingredientResultSet.next()) {
-                Ingredient ingredient = this.buildIngredient(ingredientResultSet);
-                this.loadInventoryItems(ingredient, ingredientResultSet.getInt("id"));
-            }
-        } catch (Exception e) {
-            ExceptionLogger.logException(e);
-            System.exit(0);
-        }
-    }
-    
-    /**
-     * Loads every utensil from the database into the in-memory inventory,
-     * exiting the application if the query fails.
-     */
-    private void loadUtensils() {
-        Statement utensilStatement = null;
-        try {
-            utensilStatement = this.createStatement();
-        } catch (Exception e) {
-            ExceptionLogger.logException(e);
-            System.exit(0);
-        }
-
-        ResultSet utensilResultSet = null;
-        String utensilQuery = "SELECT name, current_amount, restock_threshold FROM utensils";
-        try {
-            utensilResultSet = utensilStatement.executeQuery(utensilQuery);
-        } catch (Exception e) {
-            ExceptionLogger.logException(e);
-            System.exit(0);
-        }
-
-        try {
-            while (utensilResultSet.next()) {
-                Utensil utensil = this.buildUtensil(utensilResultSet);
-                this.utensils.put(utensil.getName(), utensil);
-            }
-        } catch (Exception e) {
-            ExceptionLogger.logException(e);
-            System.exit(0);
-        }
-    }
-
-    /**
-     * Builds an ingredient from the current row of the given result set and
-     * adds it to the in-memory inventory.
-     *
-     * @param resultSet the ingredient result set positioned at a valid row
-     * @return the ingredient that was built and stored
-     * @throws SQLException if a column cannot be read
-     */
-    private Ingredient buildIngredient(ResultSet resultSet) throws SQLException {
-        InventoryLocation location = this.parseLocation(resultSet.getString("inventory_type"));
-        Unit unit = this.parseUnit(resultSet.getString("unit"));
-
-        Ingredient ingredient = new Ingredient.Builder(
-                resultSet.getString("name"), unit, location)
-            .lifespan(resultSet.getInt("shelf_life"))
-            .restockThreshold(resultSet.getInt("restock_threshold"))
-            .build();
-
-        this.ingredients.putIfAbsent(ingredient.getName(), ingredient);
-        return ingredient;
-    }
-
-    /**
-     * Loads all inventory items for the given ingredient from the database.
-     *
-     * @param ingredient the ingredient to populate with inventory items
-     * @param ingredientId the database id of the ingredient
-     * @throws SQLException if the query or a column read fails
-     */
-    private void loadInventoryItems(Ingredient ingredient, int ingredientId)
-            throws SQLException {
-        Statement inventoryItemStatement = this.createStatement();
-        String inventoryItemQuery = "SELECT quantity, restock_date " +
-            "FROM inventory " +
-            "WHERE ingredient_id = " + ingredientId + ";";
-        ResultSet inventoryItemResultSet =
-            inventoryItemStatement.executeQuery(inventoryItemQuery);
-        while (inventoryItemResultSet.next()) {
-            InventoryItem inventoryItem = new InventoryItem.Builder(ingredient)
-                .quantity(inventoryItemResultSet.getInt("quantity"))
-                .restockDate(inventoryItemResultSet.getDate("restock_date").toLocalDate())
-                .build();
-            ingredient.addInventoryItem(inventoryItem);
-        }
     }
 
     /**
@@ -200,38 +81,6 @@ public class InventoryManager extends DatabaseConnector {
             default -> throw new IllegalArgumentException("Invalid unit: " + unit);
         }
     }
-    
-    /**
-     * Builds a utensil from the current row of the given result set and adds it
-     * to the in-memory inventory.
-     *
-     * @param resultSet the utensil result set positioned at a valid row
-     * @return the utensil that was built and stored
-     * @throws SQLException if a column cannot be read
-     */
-    private Utensil buildUtensil(ResultSet resultSet) throws SQLException {
-        Utensil utensil = new Utensil.Builder(resultSet.getString("name"))
-            .quantity(resultSet.getInt("current_amount"))
-            .restockThreshold(resultSet.getInt("restock_threshold"))
-            .build();
-        return utensil;
-    }
-
-    /**
-     * Returns the in-memory inventory map that holds the given item, choosing
-     * between the ingredient and utensil maps by name.
-     *
-     * @param item the item whose inventory map should be located
-     * @return the ingredient or utensil map containing the item
-     */
-    private Map<String, ? extends Restockable> getInventoryMap(Restockable item) {
-        // Confirm that utensils and ingredients have distinct names to avoid ambiguity
-        assert !this.ingredients.containsKey(item.getName()) || !this.utensils.containsKey(item.getName());
-
-        return this.ingredients.containsKey(item.getName())
-            ? this.ingredients
-            : this.utensils;
-    }
 
     /**
      * Returns every ingredient in the inventory, across all locations.
@@ -239,7 +88,32 @@ public class InventoryManager extends DatabaseConnector {
      * @return a list of all ingredients
      */
     public List<Ingredient> getAllIngredients() {
-        return List.copyOf(this.ingredients.values());
+        ArrayList<Ingredient> allIngredients = new ArrayList<>();
+
+        try {
+            Statement ingredientStatement = this.createStatement();
+            String ingredientQuery = "SELECT * FROM ingredients;";
+            ResultSet ingredientResultSet = ingredientStatement.executeQuert(ingredientQuery);
+
+            while (ingredientResultSet.next()) {
+                String name = ingredientResultSet.getString("name");
+                InventoryLocation location = this.parseLocation(ingredientResultSet.getString("inventory_type"));
+                Unit unit = this.parseUnit(ingredientResultSet.getString("unit"));
+                int shelfLife = ingredientResultSet.getInt("shelf_life");
+                int restockThreshold = ingredientResultSet.getInt("restock_threshold");
+
+                Ingredient ingredient = Ingredient.Builder(name, unit, location)
+                    .lifespan(shelfLife)
+                    .restockThreshold(restockThreshold)
+                    .build();
+                allIngredients.add(ingredient);
+            }
+        } catch (SQLException e) {
+            ExceptionLogger.logException(e);
+            System.exit(0);
+        }
+
+        return allIngredients;
     }
 
     /**
@@ -249,9 +123,32 @@ public class InventoryManager extends DatabaseConnector {
      * @return a list of ingredients in that location
      */
     public List<Ingredient> getIngredients(InventoryLocation location) {
-        return this.ingredients.values().stream()
-            .filter(i -> i.getLocation() == location)
-            .toList();
+        ArrayList<Ingredient> ingredientsInLocation = new ArrayList<>();
+
+        try {
+            Statement ingredientStatement = this.createStatement();
+            String ingredientQuery = "SELECT * FROM ingredients " +
+                "WHERE inventory_type = " location.toString().toLowerCase() + ";";
+            ResultSet ingredientResultSet = ingredientStatement.executeQuery(ingredientQuery);
+
+            while (ingredientResultSet.next()) {
+                String name = ingredientResultSet.getString("name");
+                Unit unit = this.parseUnit(ingredientResultSet.getString("unit"));
+                int shelfLife = ingredientResultSet.getInt("shelf_life");
+                int restockThreshold = ingredientResultSet.getInt("restock_threshold");
+
+                Ingredient ingredient = Ingredient.Builder(name, unit, location)
+                    .lifespan(shelfLife)
+                    .restockThreshold(restockThreshold)
+                    .build();
+                ingredientsInLocation.add(ingredient);
+            }
+        } catch (SQLException e) {
+            ExceptionLogger.logException(e);
+            System.exit(0);
+        }
+
+        return ingredientsInLocation;
     }
     
     /**
