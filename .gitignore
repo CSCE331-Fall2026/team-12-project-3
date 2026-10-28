@@ -1,8 +1,15 @@
 # macOS artifacts
 **/.DS_Store
 
+# Python artifacts
+**/__pycache__
+
 # Maven artifacts
 target
 
 # Environment variables
 src/main/java/com/csce331/common/DatabaseSetup.java
+
+# Generated scripts
+db/orders.sql
+db/inventory.sql
