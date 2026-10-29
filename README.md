@@ -5,8 +5,8 @@ reports and a kiosk-style ordering system for customers.
 
 ## Roles
 
-Frontend: Evan Chang
-Backend: Kedar Panchal
+Frontend: Evan Chang  
+Backend: Kedar Panchal  
 Project Manager/Full Stack: Vihal Arumalla
 
 ## Novel Feature
