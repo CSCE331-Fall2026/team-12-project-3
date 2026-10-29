@@ -51,7 +51,7 @@ ALTER TABLE IF EXISTS menu_items
     ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
 
 CREATE TABLE IF NOT EXISTS ingredients (
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
     shelf_life INT NOT NULL CHECK (shelf_life >= 0) DEFAULT 0,
     restock_threshold INT NOT NULL CHECK (restock_threshold >= 0) DEFAULT 0,
     inventory_type inventory_location NOT NULL,
