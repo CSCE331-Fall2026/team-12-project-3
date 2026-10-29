@@ -157,7 +157,27 @@ public class InventoryManager extends DatabaseConnector {
      * @return a list of all utensils
      */
     public List<Utensil> getUtensils() {
-        return List.copyOf(this.utensils.values());
+        ArrayList<Ingredient> allUtensils = new ArrayList<>();
+
+        try {
+            Statement utensilStatement = this.createStatement();
+            String utensilQuery = "SELECT * FROM utensils;";
+            ResultSet utensilResultSet = utensilStatement.executeQuery(utensilQuery);
+
+            while (utensilResultSet.next()) {
+                String name = utensilResultSet.getString("name");
+                int restockThreshold = utensilResultSet.getInt("restock_threshold");
+
+                Utensil utensil = new Utensil(name)
+                    .restockThreshold(restockThreshold)
+                    .quantity(utensilResultSet.getInt("current_amount"))
+                    .build();
+                allUtensils.add(utensil);
+            }
+        } catch (SQLException e) {
+            ExceptionLogger.logException(e);
+            System.exit(0);
+        }
     }
     
     /**
@@ -168,17 +188,14 @@ public class InventoryManager extends DatabaseConnector {
      * @param item the inventory item to restock
      * @param quantity the amount to add
      */
-    public void restock(Restockable item, int quantity) {
-        Map<String, ? extends Restockable> inventoryMap = this.getInventoryMap(item);
-        if (!inventoryMap.containsKey(item.getName())) {
-            return;
-        }
-
-        String updateQuery = inventoryMap.get(item.getName()).restock(quantity);
+    public void restock(String itemName, int quantity) {
         try {
-            Statement updateStatement = this.createStatement();
-            updateStatement.executeUpdate(updateQuery);
-        } catch (Exception e) {
+            Statement restockStatement = this.createStatement();
+            String restockQuery = "UPDATE inventory " +
+                "SET current_amount = current_amount + " + quantity + " " +
+                "WHERE ingredient_id IN (SELECT id FROM ingredients WHERE name = '" + itemName + "');";
+            restockStatement.executeUpdate(restockQuery);
+        } catch (SQLException e) {
             ExceptionLogger.logException(e);
             System.exit(0);
         }
@@ -192,17 +209,14 @@ public class InventoryManager extends DatabaseConnector {
      * @param item the inventory item to update
      * @param threshold the new restock threshold
      */
-    public void setRestockThreshold(Restockable item, int threshold) {
-        Map<String, ? extends Restockable> inventoryMap = this.getInventoryMap(item);
-        if (!inventoryMap.containsKey(item.getName())) {
-            return;
-        }
-
-        String updateQuery = inventoryMap.get(item.getName()).setRestockThreshold(threshold);
+    public void setRestockThreshold(String itemName, int threshold) {
         try {
-            Statement updateStatement = this.createStatement();
-            updateStatement.executeUpdate(updateQuery);
-        } catch (Exception e) {
+            Statement thresholdStatement = this.createStatement();
+            String thresholdQuery = "UPDATE ingredients " +
+                "SET restock_threshold = " + threshold + " " +
+                "WHERE name = '" + itemName + "';";
+            thresholdStatement.executeUpdate(thresholdQuery);
+        } catch (SQLException e) {
             ExceptionLogger.logException(e);
             System.exit(0);
         }
@@ -214,27 +228,21 @@ public class InventoryManager extends DatabaseConnector {
      *
      * @return the list of inventory items that were removed due to expiration
      */
-    public List<InventoryItem> endDay() {
-        // Delete expired inventory items from the database
+    public int endDay() {
+        int deletionCount = 0;
         try {
             Statement deleteStatement = this.createStatement();
             String deleteQuery = "DELETE FROM inventory " +
                 "USING ingredients " +
                 "WHERE inventory.ingredient_id = ingredients.id " +
                 "AND (inventory.restock_date + ingredients.shelf_life) < CURRENT_DATE;";
-            deleteStatement.executeUpdate(deleteQuery);
+            deletionCount = deleteStatement.executeUpdate(deleteQuery);
         } catch (Exception e) {
             ExceptionLogger.logException(e);
             System.exit(0);
         }
-        
-        // Delete expired inventory items from the ingredients
-        List<InventoryItem> expiredItems = new ArrayList<>();
-        for (Ingredient ingredient : this.ingredients.values()) {
-            expiredItems.addAll(ingredient.removeExpiredItems());
-        }
 
-        return expiredItems;
+        return deletionCount;
     }
     
     /**
