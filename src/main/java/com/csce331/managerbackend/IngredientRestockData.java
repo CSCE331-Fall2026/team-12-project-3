@@ -9,4 +9,4 @@ package com.csce331.managerbackend;
  * @param amountExpired the amount of the ingredient that will expire at the end
  *                      of the day
  */
-public record IngredientRestockData(Ingredient ingredient, int amountExpired) {}
+public record IngredientRestockData(Ingredient ingredient, int quantity, int amountExpired) {}

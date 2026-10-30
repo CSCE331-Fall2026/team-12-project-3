@@ -23,12 +23,8 @@ public class Ingredient implements Restockable {
     private final InventoryLocation location;
     /** The shelf life of the ingredient in days. */
     private final int lifespan;
-    /** The total on-hand quantity across all restock batches. */
-    private int quantity;
     /** The quantity at or below which the ingredient should be restocked. */
     private int restockThreshold;
-    /** The restock batches for this ingredient, keyed by restock date. */
-    private Map<LocalDate, InventoryItem> inventoryItems;
 
     /**
      * Creates an ingredient from the given builder.
@@ -40,9 +36,7 @@ public class Ingredient implements Restockable {
         this.unit = builder.unit;
         this.location = builder.location;
         this.lifespan = builder.lifespan;
-        this.quantity = builder.quantity;
         this.restockThreshold = builder.restockThreshold;
-        this.inventoryItems = new HashMap<>();
     }
 
     /**
@@ -82,15 +76,6 @@ public class Ingredient implements Restockable {
     }
 
     /**
-     * Returns the total on-hand quantity across all restock batches.
-     *
-     * @return the total quantity
-     */
-    public int getQuantity() {
-        return this.quantity;
-    }
-
-    /**
      * Returns the quantity at or below which the ingredient should be
      * restocked.
      *
@@ -98,113 +83,6 @@ public class Ingredient implements Restockable {
      */
     public int getRestockThreshold() {
         return this.restockThreshold;
-    }
-
-    /**
-     * Returns the restock batches currently held for this ingredient.
-     *
-     * @return an immutable list of inventory items
-     */
-    public List<InventoryItem> getInventoryItems() {
-        return List.copyOf(this.inventoryItems.values());
-    }
-
-    /**
-     * Adds a restock batch to this ingredient, merging it with an existing
-     * batch that shares the same restock date, and updates the total quantity.
-     *
-     * @param item the inventory item to add
-     */
-    public void addInventoryItem(InventoryItem item) {
-        if (this.inventoryItems.containsKey(item.getRestockDate())) {
-            InventoryItem existingItem = this.inventoryItems.get(item.getRestockDate());
-            existingItem.updateQuantity(item.getQuantity());
-            return;
-        } else {
-            this.inventoryItems.put(item.getRestockDate(), item);
-        }
-        this.quantity += item.getQuantity();
-    }
-
-    /**
-     * Sets the quantity at or below which the ingredient should be restocked.
-     *
-     * @param threshold the new threshold; must be positive
-     * @return a SQL query to update the restock threshold
-     * @throws IllegalArgumentException if {@code threshold} is not positive
-     */
-    public String setRestockThreshold(int threshold) {
-        if (threshold <= 0) {
-            throw new IllegalArgumentException("Restock threshold must be positive");
-        }
-        this.restockThreshold = threshold;
-        return "UPDATE ingredients " +
-            "SET restock_threshold = " + this.restockThreshold + " " +
-            "WHERE name = '" + this.name + "';";
-    }
-
-    /**
-     * Restocks this ingredient by the specified quantity, adding a new batch
-     * dated today and updating the total quantity.
-     *
-     * @param quantity the quantity to restock; must be positive
-     * @return a SQL query to insert or update the restock batch
-     * @throws IllegalArgumentException if {@code quantity} is not positive
-     */
-    public String restock(int quantity) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Restock quantity must be positive");
-        }
-
-        InventoryItem item = new InventoryItem.Builder(this).quantity(quantity).build();
-        this.addInventoryItem(item);
-        return "INSERT INTO inventory (ingredient_id, quantity, restock_date) " +
-            "VALUES SELECT id, " + quantity + ", CURRENT_DATE " +
-            "FROM ingredients WHERE name = '" + this.name + "' " +
-            "ON CONFLICT (ingredient_id, restock_date) " +
-            "DO UPDATE SET quantity = inventory.quantity + " + quantity + ";";
-    }
-
-    /**
-     * Returns whether the ingredient's total quantity has reached or fallen
-     * below its restock threshold.
-     *
-     * @return {@code true} if restocking is needed, {@code false} otherwise
-     */
-    public boolean isRestockNeeded() {
-        return this.quantity <= this.restockThreshold;
-    }
-
-    /**
-     * Removes all expired restock batches from this ingredient and reduces the
-     * total quantity accordingly.
-     *
-     * @return the list of inventory items that were removed
-     */
-    public List<InventoryItem> removeExpiredItems() {
-        List<InventoryItem> expiredItems = this.inventoryItems
-            .values()
-            .stream()
-            .filter(InventoryItem::isExpired)
-            .toList();
-        for (InventoryItem item : expiredItems) {
-            this.inventoryItems.remove(item.getRestockDate());
-            this.quantity -= item.getQuantity();
-        }
-        return expiredItems;
-    }
-
-    /**
-     * Returns the inventory batch with the earliest restock date.
-     *
-     * @return the next expiring inventory item, or {@code null} if there are no batches
-     */
-    public InventoryItem getNextExpiringItem() {
-        return this.inventoryItems
-            .values()
-            .stream()
-            .min((a, b) -> a.getRestockDate().compareTo(b.getRestockDate()))
-            .orElse(null);
     }
 
     /**
@@ -221,8 +99,6 @@ public class Ingredient implements Restockable {
         private final InventoryLocation location;
         /** The shelf life in days for the ingredient being built. */
         private int lifespan;
-        /** The initial quantity for the ingredient being built. */
-        private int quantity;
         /** The restock threshold for the ingredient being built. */
         private int restockThreshold;
 
@@ -239,7 +115,6 @@ public class Ingredient implements Restockable {
             this.unit = unit;
             this.location = location;
             this.lifespan = 0;
-            this.quantity = 0;
             this.restockThreshold = 1;
         }
 
