@@ -20,18 +20,18 @@ import com.csce331.common.DatabaseSetup;
 import com.csce331.common.ExceptionLogger;
 
 /**
- * Manages the restaurant's inventory, loading ingredients and utensils from the
- * database and providing access to them by location. Supports restocking
- * inventory items, adjusting their restock thresholds, and end-of-day
- * expiration handling.
+ * Manages the restaurant's inventory, providing access to the ingredients and
+ * utensils it holds, organized by the location each ingredient is kept in.
+ * Supports restocking ingredients, changing their restock thresholds, reporting
+ * which ingredients need restocking, discarding expired ingredients at the end
+ * of the day, and reporting sales revenue per menu item.
  *
  * @author Kedar Panchal
  */
 public class InventoryManager extends DatabaseConnector {
 
     /**
-     * Creates an inventory manager, opening a database connection and loading
-     * all ingredients and utensils and their current inventory into memory.
+     * Creates an inventory manager with a connection to the inventory database.
      */
     public InventoryManager() {
         super();
@@ -126,7 +126,7 @@ public class InventoryManager extends DatabaseConnector {
         try {
             Statement ingredientStatement = this.createStatement();
             String ingredientQuery = "SELECT * FROM ingredients " +
-                "WHERE inventory_type = " location.toString().toLowerCase() + ";";
+                "WHERE inventory_type = " + location.toString().toLowerCase() + ";";
             ResultSet ingredientResultSet = ingredientStatement.executeQuery(ingredientQuery);
 
             while (ingredientResultSet.next()) {
@@ -150,7 +150,7 @@ public class InventoryManager extends DatabaseConnector {
     }
     
     /**
-     * Returns every utensil in the inventory.
+     * Returns every utensil tracked in the inventory.
      *
      * @return a list of all utensils
      */
@@ -179,12 +179,12 @@ public class InventoryManager extends DatabaseConnector {
     }
     
     /**
-     * Restocks the given inventory item by the specified quantity, updating both
-     * the database and in-memory inventory. Has no effect if the item is not
-     * part of the inventory.
+     * Adds the given amount to the quantity on hand of the named ingredient.
+     * Has no effect if no ingredient has that name. Utensils are not affected
+     * by this method.
      *
-     * @param item the inventory item to restock
-     * @param quantity the amount to add
+     * @param itemName the name of the ingredient to restock
+     * @param quantity the amount to add to the ingredient's quantity on hand
      */
     public void restock(String itemName, int quantity) {
         try {
@@ -200,11 +200,11 @@ public class InventoryManager extends DatabaseConnector {
     }
 
     /**
-     * Sets the restock threshold of the given inventory item, updating both the
-     * database and in-memory inventory. Has no effect if the item is not part of
-     * the inventory.
+     * Sets the restock threshold of the named ingredient, the quantity on hand at
+     * or below which it is considered to need restocking. Has no effect if no
+     * ingredient has that name. Utensils are not affected by this method.
      *
-     * @param item the inventory item to update
+     * @param itemName the name of the ingredient to update
      * @param threshold the new restock threshold
      */
     public void setRestockThreshold(String itemName, int threshold) {
@@ -221,10 +221,10 @@ public class InventoryManager extends DatabaseConnector {
     }
 
     /**
-     * Ends the current day by removing all expired inventory from both the
-     * database and in-memory inventory.
+     * Ends the current day by discarding all expired inventory. Inventory is
+     * expired once it has been held for longer than the ingredient's shelf life.
      *
-     * @return the list of inventory items that were removed due to expiration
+     * @return the number of inventory entries that were removed
      */
     public int endDay() {
         int deletionCount = 0;
@@ -244,13 +244,14 @@ public class InventoryManager extends DatabaseConnector {
     }
     
     /**
-     * Returns a report of ingredients that need to be restocked in the given
-     * location, along with the amount of each ingredient that will expire at the
-     * end of the day.
+     * Returns a restock report for the given location, with one entry for each
+     * ingredient stored there whose quantity on hand is at or below its restock
+     * threshold. Each entry reports the ingredient, its total quantity on hand,
+     * and how much of that quantity expires at the end of the day.
      *
-     * @param location the inventory location to query
-     * @return a list of ingredient restock data for ingredients that need to be
-     *         restocked in that location
+     * @param location the inventory location to report on
+     * @return the restock data for each ingredient in the location that needs to
+     *         be restocked
      */
     public List<IngredientRestockData> ingredientRestockReport(InventoryLocation location) {
         List <IngredientRestockData> restockReport = new ArrayList<>();
@@ -272,7 +273,7 @@ public class InventoryManager extends DatabaseConnector {
                     + "GROUP BY in.id, inv.quantity "
                 + ") "
                 + "WHERE in.inventory_type = '" + location.toString().toLowerCase() + "' "
-                + "GROUP BY in.id;"
+                + "GROUP BY in.id;";
             ResultSet restockResultSet = restockStatement.executeQuery(restockQuery);
 
             while (restockResultSet.next()) {
@@ -305,13 +306,10 @@ public class InventoryManager extends DatabaseConnector {
     /**
      * Returns a report of sales revenue per menu item for the given date range.
      *
-     * Sales reports include the total revenue generated by each menu item during the specified
-     * date range.
-     *
      * @param startDate the start date and time of the report range
      * @param endDate the end date and time of the report range
-     * @return a map of dates to maps of menu item names to their total sales revenue during the
-     * specified date range
+     * @return a map of sale dates to maps of menu item names to their total sales
+     *         revenue on that date; dates with no sales are absent
      */
     public Map<LocalDate, Map<String, Double>> menuItemSalesReport(
             LocalDateTime startDate, LocalDateTime endDate) {

@@ -8,9 +8,10 @@ import java.util.LinkedList;
 import java.time.LocalDate;
 
 /**
- * An ingredient tracked in the inventory, aggregating all of its restock
- * batches and exposing its total on-hand quantity. Instances are created
- * through the {@link Builder}.
+ * An ingredient tracked in the inventory, described by its name, unit of
+ * measurement, storage location, shelf life in days, and the quantity on hand at
+ * or below which it should be restocked. These values are fixed once the
+ * ingredient is built. Instances are created through the {@link Builder}.
  *
  * @author Kedar Panchal
  */
@@ -121,7 +122,7 @@ public class Ingredient implements Restockable {
         /**
          * Sets the shelf life of the ingredient in days.
          *
-         * @param lifespan the lifespan in days
+         * @param lifespan the lifespan in days, which must not be negative
          * @return this builder
          */
         public Builder lifespan(int lifespan) {
@@ -130,10 +131,10 @@ public class Ingredient implements Restockable {
         }
 
         /**
-         * Sets the quantity at or below which the ingredient should be
+         * Sets the quantity on hand at or below which the ingredient should be
          * restocked.
          *
-         * @param restockThreshold the restock threshold
+         * @param restockThreshold the restock threshold, which must be positive
          * @return this builder
          */
         public Builder restockThreshold(int restockThreshold) {
@@ -145,8 +146,8 @@ public class Ingredient implements Restockable {
          * Builds the configured {@link Ingredient}.
          *
          * @return a new ingredient
-         * @throws IllegalArgumentException if the name is empty, the unit or
-         *         location is null, the lifespan is negative, or the restock
+         * @throws IllegalArgumentException if the name is null or empty, the unit
+         *         or location is null, the lifespan is negative, or the restock
          *         threshold is not positive
          */
         public Ingredient build() {
