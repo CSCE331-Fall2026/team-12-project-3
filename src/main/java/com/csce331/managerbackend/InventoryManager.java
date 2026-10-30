@@ -25,8 +25,6 @@ import com.csce331.common.ExceptionLogger;
  * inventory items, adjusting their restock thresholds, and end-of-day
  * expiration handling.
  *
- * TODO: Refactoring has broken the ENTIRE class, so fix this as needed
- *
  * @author Kedar Panchal
  */
 public class InventoryManager extends DatabaseConnector {
@@ -255,149 +253,53 @@ public class InventoryManager extends DatabaseConnector {
      *         restocked in that location
      */
     public List<IngredientRestockData> ingredientRestockReport(InventoryLocation location) {
-        // Get all ingredients in the specified location
-        List<Ingredient> candidateIngredients = this.ingredients.values().stream()
-            .filter(i -> i.getLocation() == location && i.isRestockNeeded())
-            .toList();
-
-        // Find for each candidate ingredient the earliest expiration date and the amount that will expire on that date
-        List<IngredientRestockData> restockDataList = new ArrayList<>();
-        for (Ingredient ingredient : candidateIngredients) {
-            int expirationCount = ingredient.getInventoryItems().stream()
-                .filter(InventoryItem::isExpired)
-                .reduce(0, (sum, item) -> sum + item.getQuantity(), Integer::sum);
-            restockDataList.add(new IngredientRestockData(ingredient, expirationCount));
-
-        }
-
-        return restockDataList;
-    }
-    
-    /**
-     * Returns a report of utensils that need to be restocked.
-     *
-     * @return a list of utensils that need to be restocked
-     */
-    public List<Utensil> utensilRestockReport() {
-        // Get all utensils that need restocking
-        return this.utensils.values().stream()
-            .filter(Utensil::isRestockNeeded)
-            .toList();
-    }
-    
-    /**
-     * Returns a report of ingredient usage for the given location and date range.
-     *
-     * Usage reports include the total quantity of each ingredient used in orders during the 
-     * specified date range.
-     *
-     * @param location the inventory location to query
-     * @param startDate the start date and time of the report range
-     * @param endDate the end date and time of the report range
-     * @return a map of dates to maps of ingredients to their total usage quantities during the 
-     * specified date range
-     */
-    public Map<LocalDate, Map<Ingredient, Double>> ingredientUsageReport(
-            InventoryLocation location, LocalDateTime startDate, LocalDateTime endDate) {
-        LocalDate sqlStartDate = startDate.toLocalDate();
-        LocalDate sqlEndDate = endDate.toLocalDate();
-        LocalTime sqlStartTime = startDate.toLocalTime();
-        LocalTime sqlEndTime = endDate.toLocalTime();
-        Map<LocalDate, Map<Ingredient, Double>> result = new HashMap<>();
+        List <IngredientRestockData> restockReport = new ArrayList<>();
 
         try {
-            Statement usageStatement = this.createStatement();
-            String usageQuery = 
-                "WITH ordered_items AS ( " +
-                    "SELECT om.menu_item_id, o.order_date, SUM(om.quantity) AS total_quantity " +
-                    "FROM order_menu AS om " +
-                    "JOIN orders AS o " +
-                    "ON om.order_id = o.id " +
-                    "WHERE o.order_date BETWEEN '" + sqlStartDate.toString() + "' " +
-                    "AND '" + sqlEndDate.toString() + "' " +
-                    "AND o.order_time BETWEEN '" + sqlStartTime.toString() + "' " +
-                    "AND '" + sqlEndTime.toString() + "' " +
-                    "GROUP BY om.menu_item_id, o.order_date " +
-                "), ingredient_counts AS ( " +
-                    "SELECT mi.ingredient_id, oi.order_date AS usage_date, " + 
-                    "SUM(mi.quantity * oi.total_quantity) AS total_used " +
-                    "FROM menu_ingredients AS mi " +
-                    "JOIN ordered_items AS oi " +
-                    "ON mi.menu_item_id = oi.menu_item_id " +
-                    "GROUP BY mi.ingredient_id, oi.order_date " +
-                ") SELECT i.name, ic.usage_date, ic.total_used " +
-                "FROM ingredients AS i " +
-                "JOIN ingredient_counts AS ic " +
-                "ON i.id = ic.ingredient_id " +
-                "WHERE i.inventory_type = '" + location.toString().toLowerCase() + "';";
+            Statement restockStatement = this.createStatement();
+            String restockQuery = "SELECT in.*, "
+                + "inv.quantity AS next_expiration_quantity "
+                + "SUM(inv.quantity) AS total_quantity, "
+                + "FROM ingredients AS in "
+                + "JOIN inventory AS inv "
+                + "ON ned.ingredient_id = inv.ingredient_id "
+                + "AND (inv.restock_date + in.shelf_life - CURRENT_DATE) IN ( "
+                    + "SELECT in.id AS ingredient_id, "
+                    + "MIN(iv.restock_date + in.shelf_life - CURRENT_DATE) AS next_expiration_date "
+                    + "FROM ingredients AS in "
+                    + "JOIN inventory AS iv "
+                    + "ON in.id = iv.ingredient_id "
+                    + "GROUP BY in.id, inv.quantity "
+                + ") "
+                + "WHERE in.inventory_type = '" + location.toString().toLowerCase() + "' "
+                + "GROUP BY in.id;"
+            ResultSet restockResultSet = restockStatement.executeQuery(restockQuery);
 
-            ResultSet usageResultSet = usageStatement.executeQuery(usageQuery);
-            while (usageResultSet.next()) {
-                Ingredient ingredient = this.ingredients.get(usageResultSet.getString("name"));
-                result.putIfAbsent(
-                        usageResultSet.getDate("usage_date").toLocalDate(), new HashMap<>());
-                result.get(usageResultSet.getDate("usage_date").toLocalDate())
-                    .put(ingredient, usageResultSet.getDouble("total_used"));
-            }
-        } catch (Exception e) {
-            ExceptionLogger.logException(e);
-            System.exit(0);
-        }
-        return result;
-    }
-    
-    /**
-     * Returns a report of utensil usage for the given date range.
-     *
-     * Usage reports include the total quantity of each utensil used in orders during the 
-     * specified date range.
-     *
-     * @param startDate the start date and time of the report range
-     * @param endDate the end date and time of the report range
-     * @return a map of dates to maps of utensils to their total usage quantities during the 
-     * specified date range
-     */
-    public Map<LocalDate, Map<Utensil, Double>> utensilUsageReport(
-            LocalDateTime startDate, LocalDateTime endDate) {
-        LocalDate sqlStartDate = startDate.toLocalDate();
-        LocalDate sqlEndDate = endDate.toLocalDate();
-        LocalTime sqlStartTime = startDate.toLocalTime();
-        LocalTime sqlEndTime = endDate.toLocalTime();
-        Map<LocalDate, Map<Utensil, Double>> result = new HashMap<>();
+            while (restockResultSet.next()) {
+                String name = restockResultSet.getString("name");
+                Unit unit = this.parseUnit(restockResultSet.getString("unit"));
+                int shelfLife = restockResultSet.getInt("shelf_life");
+                int restockThreshold = restockResultSet.getInt("restock_threshold");
+                int totalQuantity = restockResultSet.getInt("total_quantity");
+                int nextExpirationQuantity = restockResultSet.getInt("next_expiration_quantity");
 
-        try {
-            Statement usageStatement = this.createStatement();
-            String usageQuery =
-                "WITH ordered_utensils AS ( " +
-                    "SELECT ou.utensil_id, o.order_date AS usage_date, " +
-                    "SUM(ou.quantity) AS total_used " +
-                    "FROM order_utensils AS ou " +
-                    "JOIN orders AS o " +
-                    "ON ou.order_id = o.id " +
-                    "WHERE o.order_date BETWEEN '" + sqlStartDate.toString() + "' " +
-                    "AND '" + sqlEndDate.toString() + "' " +
-                    "AND o.order_time BETWEEN '" + sqlStartTime.toString() + "' " +
-                    "AND '" + sqlEndTime.toString() + "' " +
-                    "GROUP BY ou.utensil_id, o.order_date " +
-                ") SELECT u.name, ou.usage_date, ou.total_used " +
-                "FROM utensils AS u " +
-                "JOIN ordered_utensils AS ou " +
-                "ON u.id = ou.utensil_id;";
-            
-            ResultSet usageResultSet = usageStatement.executeQuery(usageQuery);
-            while (usageResultSet.next()) {
-                Utensil utensil = this.utensils.get(usageResultSet.getString("name"));
-                result.putIfAbsent(
-                        usageResultSet.getDate("usage_date").toLocalDate(), new HashMap<>());
-                result.get(usageResultSet.getDate("usage_date").toLocalDate())
-                    .put(utensil, usageResultSet.getDouble("total_used"));
+                Ingredient ingredient = Ingredient.Builder(name, unit, location)
+                    .lifespan(shelfLife)
+                    .restockThreshold(restockThreshold)
+                    .build();
+
+                if (ingredient.isRestockNeeded()) {
+                    IngredientRestockData restockData = new IngredientRestockData(
+                        ingredient, totalQuantity, nextExpirationQuantity);
+                    restockReport.add(restockData);
+                }
             }
         } catch (Exception e) {
             ExceptionLogger.logException(e);
             System.exit(0);
         }
 
-        return result;
+        return restockReport;
     }
 
     /**
@@ -440,48 +342,6 @@ public class InventoryManager extends DatabaseConnector {
                 LocalDate saleDate = salesResultSet.getDate("sale_date").toLocalDate();
                 result.putIfAbsent(saleDate, new HashMap<>());
                 result.get(saleDate)
-                    .put(salesResultSet.getString("name"), salesResultSet.getDouble("total_sales"));
-            }
-        } catch (Exception e) {
-            ExceptionLogger.logException(e);
-            System.exit(0);
-        }
-        return result;
-    }
-
-    /**
-     * Returns a report of sales revenue per menu item for each hour of the given day.
-     *
-     * @param day the day to query
-     * @param startTime the start time of the report range
-     * @param endTime the end time of the report range
-     * @return a map of hours to maps of menu item names to their total sales revenue during the
-     * specified hour
-     */
-    public Map<Integer, Map<String, Double>> menuItemSalesByHourReport(
-            LocalDate day, LocalTime startTime, LocalTime endTime) {
-        Map<Integer, Map<String, Double>> result = new HashMap<>();
-
-        try {
-            Statement salesStatement = this.createStatement();
-            String salesQuery =
-                "SELECT mi.name, EXTRACT(HOUR FROM o.order_time) AS sale_hour, " +
-                "SUM(om.quantity * mi.price) AS total_sales " +
-                "FROM order_menu AS om " +
-                "JOIN orders AS o " +
-                "ON om.order_id = o.id " +
-                "JOIN menu_items AS mi " +
-                "ON om.menu_item_id = mi.id " +
-                "WHERE o.order_date = '" + day.toString() + "' " +
-                "AND o.order_time BETWEEN '" + startTime.toString() + "' " +
-                "AND '" + endTime.toString() + "' " +
-                "GROUP BY mi.name, sale_hour;";
-
-            ResultSet salesResultSet = salesStatement.executeQuery(salesQuery);
-            while (salesResultSet.next()) {
-                int saleHour = salesResultSet.getInt("sale_hour");
-                result.putIfAbsent(saleHour, new HashMap<>());
-                result.get(saleHour)
                     .put(salesResultSet.getString("name"), salesResultSet.getDouble("total_sales"));
             }
         } catch (Exception e) {
