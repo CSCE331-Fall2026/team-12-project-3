@@ -1,5 +1,6 @@
 package com.csce331.cashierbackend;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -33,12 +34,15 @@ public class TestCashier {
 
         if (!popular.isEmpty()) {
             MenuItem sampleItem = popular.keySet().iterator().next();
-            manager.addItem(sampleItem);
-            manager.addItem(sampleItem);
+
+            Map<MenuItem, Integer> cart = new LinkedHashMap<>();
+            cart.put(sampleItem, 2);
             System.out.println("\nAdded " + sampleItem.getName() + " to order.");
 
-            manager.order(PaymentMethod.CREDIT_CARD, SAMPLE_ORDER_PRICE);
-            System.out.println("Order successfully placed!");
+            int orderId = manager.order(cart, PaymentMethod.CREDIT_CARD, SAMPLE_ORDER_PRICE);
+            if (orderId != -1) {
+                System.out.println("Order #" + orderId + " successfully placed!");
+            }
         }
     }
 }

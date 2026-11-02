@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import com.csce331.common.DatabaseConnector;
 import com.csce331.common.DatabaseSetup;
 import com.csce331.common.ExceptionLogger;
 

@@ -1,11 +1,8 @@
-package com.csce331.managerbackend;
+package com.csce331.common;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-
-import com.csce331.common.DatabaseSetup;
-import com.csce331.common.ExceptionLogger;
 
 /**
  * An abstract class that provides a connection to the database for its subclasses.
@@ -15,7 +12,7 @@ import com.csce331.common.ExceptionLogger;
 public abstract class DatabaseConnector {
     /** The open JDBC connection used by subclasses. */
     private Connection connection;
-    
+
     /**
      * Constructs a new {@code DatabaseConnector} and establishes a connection to the database.
      */
@@ -28,7 +25,7 @@ public abstract class DatabaseConnector {
             System.exit(0);
         }
     }
-    
+
     /**
      * Creates a new {@code Statement} object for executing SQL queries.
      *
@@ -44,7 +41,17 @@ public abstract class DatabaseConnector {
         // Never reached, but required to satisfy the compiler
         return null;
     }
-    
+
+    /**
+     * Returns the connection held by this connector, for subclasses that need prepared
+     * statements or transaction control.
+     *
+     * @return the open JDBC connection
+     */
+    protected Connection getConnection() {
+        return this.connection;
+    }
+
     /**
      * Closes the connection to the database.
      *
