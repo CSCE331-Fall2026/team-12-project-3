@@ -177,6 +177,8 @@ public class InventoryManager extends DatabaseConnector {
             ExceptionLogger.logException(e);
             System.exit(0);
         }
+
+        return allUtensils;
     }
     
     /**
@@ -260,20 +262,12 @@ public class InventoryManager extends DatabaseConnector {
         try {
             Statement restockStatement = this.createStatement();
             String restockQuery = "SELECT in.*, "
-                + "inv.quantity AS next_expiration_quantity "
-                + "SUM(inv.quantity) AS total_quantity, "
+                + "SUM(inv.quantity) AS expired_quantity, "
                 + "FROM ingredients AS in "
                 + "JOIN inventory AS inv "
-                + "ON ned.ingredient_id = inv.ingredient_id "
-                + "AND (inv.restock_date + in.shelf_life - CURRENT_DATE) IN ( "
-                    + "SELECT in.id AS ingredient_id, "
-                    + "MIN(iv.restock_date + in.shelf_life - CURRENT_DATE) AS next_expiration_date "
-                    + "FROM ingredients AS in "
-                    + "JOIN inventory AS iv "
-                    + "ON in.id = iv.ingredient_id "
-                    + "GROUP BY in.id, inv.quantity "
-                + ") "
+                + "ON in.id = inv.ingredient_id "
                 + "WHERE in.inventory_type = '" + location.toString().toLowerCase() + "' "
+                + "AND inv.restock_date + in.shelf_life < CURRENT_DATE "
                 + "GROUP BY in.id;";
             ResultSet restockResultSet = restockStatement.executeQuery(restockQuery);
 
@@ -282,7 +276,8 @@ public class InventoryManager extends DatabaseConnector {
                 Unit unit = this.parseUnit(restockResultSet.getString("unit"));
                 int shelfLife = restockResultSet.getInt("shelf_life");
                 int restockThreshold = restockResultSet.getInt("restock_threshold");
-                int totalQuantity = restockResultSet.getInt("total_quantity");
+                int expiredQuantity = restockResultSet.getInt("expired_quantity");
+                int daysUntilExpiration = restockResultSet.getInt("days_until_expiration");
                 int nextExpirationQuantity = restockResultSet.getInt("next_expiration_quantity");
 
                 Ingredient ingredient = new Ingredient.Builder(name, unit, location)
@@ -290,11 +285,9 @@ public class InventoryManager extends DatabaseConnector {
                     .restockThreshold(restockThreshold)
                     .build();
 
-                if (ingredient.isRestockNeeded()) {
-                    IngredientRestockData restockData = new IngredientRestockData(
-                        ingredient, totalQuantity, nextExpirationQuantity);
-                    restockReport.add(restockData);
-                }
+                IngredientRestockData restockData = new IngredientRestockData(ingredient, 
+                        expiredQuantity);
+                restockReport.add(restockData);
             }
         } catch (Exception e) {
             ExceptionLogger.logException(e);
