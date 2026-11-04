@@ -45,11 +45,6 @@ CREATE TABLE IF NOT EXISTS menu_items (
     id SERIAL PRIMARY KEY
 );
 
--- Soft-delete flag for discontinued items; keeps order history intact.
--- Guarded so existing databases pick up the column on re-run.
-ALTER TABLE IF EXISTS menu_items
-    ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
-
 CREATE TABLE IF NOT EXISTS ingredients (
     name TEXT NOT NULL UNIQUE,
     shelf_life INT NOT NULL CHECK (shelf_life >= 0) DEFAULT 0,

@@ -19,75 +19,13 @@ import com.csce331.common.ExceptionLogger;
  * @author Kedar Panchal
  */
 public class MenuItemManager extends DatabaseConnector {
-    /** The active menu items, keyed by name. */
-    private Map<String, MenuItem> menuItems;
-    
     /**
      * Constructs a new {@code MenuItemManager} and loads all menu items from the database.
      */
     public MenuItemManager() {
         super();
-
-        this.menuItems = new HashMap<>();
-
-        this.loadMenuItems();
     }
-    
-    /**
-     * Loads all menu items from the database into the in-memory inventory, exiting the application
-     * if the query fails.
-     */
-    private void loadMenuItems() {
-        Statement menuItemStatement = null;
-        try {
-            menuItemStatement = this.createStatement();
-        } catch (Exception e) {
-            ExceptionLogger.logException(e);
-            System.exit(0);
-        }
-
-        ResultSet menuItemResultSet = null;
-        try {
-            menuItemResultSet = menuItemStatement.executeQuery(
-                "SELECT name, price, item_size, item_category FROM menu_items "
-                    + "WHERE is_active = TRUE;"
-            );
-        } catch (Exception e) {
-            ExceptionLogger.logException(e);
-            System.exit(0);
-        }
-
-        try {
-            while (menuItemResultSet.next()) {
-                MenuItem item = this.buildMenuItem(menuItemResultSet);
-                this.menuItems.put(item.getName(), item);
-            }
-        } catch (Exception e) {
-            ExceptionLogger.logException(e);
-            System.exit(0);
-        }
-    }
-    
-    /**
-     * Builds a menu item from the current row of the given result set and adds it to the in-memory 
-     * inventory.
-     *
-     * @param menuItemResultSet the result set containing the menu item data
-     * @return the constructed menu item
-     * @throws SQLException if an SQL error occurs while accessing the result set
-     */
-    private MenuItem buildMenuItem(ResultSet menuItemResultSet) throws SQLException {
-        MenuItemSize size = this.parseSize(menuItemResultSet.getString("item_size"));
-        MenuItemCategory category = this.parseCategory(
-                menuItemResultSet.getString("item_category"));
-        MenuItem item = new MenuItem.Builder(menuItemResultSet.getString("name"), category)
-                .price(menuItemResultSet.getDouble("price"))
-                .size(size)
-                .build();
-
-        return item;
-    }
-    
+   
     /**
      * Parses a menu item size from its database string representation.
      *
@@ -144,7 +82,31 @@ public class MenuItemManager extends DatabaseConnector {
      * @return a list of all active menu items
      */
     public List<MenuItem> getAllMenuItems() {
-        return List.copyOf(this.menuItems.values());
+        ArrayList<MenuItem> menuItemsList = new ArrayList<>();
+
+        try {
+            String query = "SELECT * FROM menu_items WHERE is_active = TRUE";
+            Statement statement = this.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+
+            while (resultSet.next()) {
+                String name = resultSet.getString("name");
+                MenuItemSize size = this.parseSize(resultSet.getString("item_size"));
+                MenuItemCategory category = this.parseCategory(resultSet.getString("category"));
+                double price = resultSet.getDouble("price");
+
+                MenuItem item = new MenuItem.Builder(name, category)
+                    .size(size)
+                    .price(price)
+                    .build();
+                menuItemsList.add(item);
+            }
+        } catch (Exception e) {
+            ExceptionLogger.logException(e);
+            System.exit(0);
+        }
+
+        return menuItemsList;
     }
     
     /**
@@ -154,9 +116,32 @@ public class MenuItemManager extends DatabaseConnector {
      * @return a list of menu items in the specified category
      */
     public List<MenuItem> getMenuItems(MenuItemCategory category) {
-        return this.menuItems.values().stream()
-                .filter(item -> item.getCategory() == category)
-                .toList();
+        ArrayList<MenuItem> menuItemsList = new ArrayList<>();
+
+        try {
+            String query = "SELECT * FROM menu_items "
+                + "WHERE category = '" + category.toString().toLowerCase() 
+                + "' AND is_active = TRUE";
+            Statement statement = this.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+
+            while (resultSet.next()) {
+                String name = resultSet.getString("name");
+                MenuItemSize size = this.parseSize(resultSet.getString("item_size"));
+                double price = resultSet.getDouble("price");
+
+                MenuItem item = new MenuItem.Builder(name, category)
+                    .size(size)
+                    .price(price)
+                    .build();
+                menuItemsList.add(item);
+            }
+        } catch (Exception e) {
+            ExceptionLogger.logException(e);
+            System.exit(0);
+        }
+
+        return menuItemsList;
     }
     
     /**
