@@ -152,12 +152,11 @@ public class MenuItemManager extends DatabaseConnector {
      * @param newPrice the new price for the menu item
      */
     public void updatePrice(MenuItem item, double newPrice) {
-        if (!this.menuItems.containsKey(item.getName())) {
-            return;
-        }
-
-        String updateQuery = this.menuItems.get(item.getName()).setPrice(newPrice);
         try {
+            String updateQuery = "UPDATE menu_items "
+                + "SET price = " + newPrice + " " +
+                "WHERE name = '" + item.getName() + " "
+                + "'AND item_size = '" + item.getSize().toString().toLowerCase() + "'";
             Statement updateStatement = this.createStatement();
             updateStatement.executeUpdate(updateQuery);
         } catch (Exception e) {
@@ -174,17 +173,12 @@ public class MenuItemManager extends DatabaseConnector {
      * @param item the menu item to discontinue
      */
     public void discontinueMenuItem(MenuItem item) {
-        if (!this.menuItems.containsKey(item.getName())) {
-            return;
-        }
-
-        String discontinueQuery = "UPDATE menu_items SET is_active = FALSE " +
-            "WHERE name = '" + item.getName() + "'" +
-            "AND item_size = '" + item.getSize().toString().toLowerCase() + "'";
         try {
+            String discontinueQuery = "UPDATE menu_items SET is_active = FALSE " +
+                "WHERE name = '" + item.getName() + "'" +
+                "AND item_size = '" + item.getSize().toString().toLowerCase() + "'";
             Statement discontinueStatement = this.createStatement();
             discontinueStatement.executeUpdate(discontinueQuery);
-            this.menuItems.remove(item.getName());
         } catch (Exception e) {
             ExceptionLogger.logException(e);
             System.exit(0);
