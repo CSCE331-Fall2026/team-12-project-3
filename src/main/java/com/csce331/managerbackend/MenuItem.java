@@ -63,22 +63,7 @@ public class MenuItem {
     public MenuItemCategory getCategory() {
         return this.category;
     }
-    
-    /**
-     * Sets the price of the menu item.
-     *
-     * @param price the new price
-     * @return the SQL query to update the price in the database
-     */
-    public String setPrice(double price) {
-        if (price < 0) {
-            throw new IllegalArgumentException("Menu item price cannot be negative");
-        }
-        this.price = price;
-        return "UPDATE menu_items SET price = " + this.price + " " +
-            "WHERE name = '" + this.name + "' AND item_size = '" + this.size + "';";
-    }
-    
+   
     /**
      * Builder class for constructing {@link MenuItem} instances.
      *
