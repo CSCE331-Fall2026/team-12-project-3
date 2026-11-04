@@ -92,7 +92,7 @@ public class InventoryManager extends DatabaseConnector {
         try {
             Statement ingredientStatement = this.createStatement();
             String ingredientQuery = "SELECT * FROM ingredients;";
-            ResultSet ingredientResultSet = ingredientStatement.executeQuert(ingredientQuery);
+            ResultSet ingredientResultSet = ingredientStatement.executeQuery(ingredientQuery);
 
             while (ingredientResultSet.next()) {
                 String name = ingredientResultSet.getString("name");
@@ -101,7 +101,7 @@ public class InventoryManager extends DatabaseConnector {
                 int shelfLife = ingredientResultSet.getInt("shelf_life");
                 int restockThreshold = ingredientResultSet.getInt("restock_threshold");
 
-                Ingredient ingredient = Ingredient.Builder(name, unit, location)
+                Ingredient ingredient = new Ingredient.Builder(name, unit, location)
                     .lifespan(shelfLife)
                     .restockThreshold(restockThreshold)
                     .build();
@@ -136,7 +136,7 @@ public class InventoryManager extends DatabaseConnector {
                 int shelfLife = ingredientResultSet.getInt("shelf_life");
                 int restockThreshold = ingredientResultSet.getInt("restock_threshold");
 
-                Ingredient ingredient = Ingredient.Builder(name, unit, location)
+                Ingredient ingredient = new Ingredient.Builder(name, unit, location)
                     .lifespan(shelfLife)
                     .restockThreshold(restockThreshold)
                     .build();
@@ -156,7 +156,7 @@ public class InventoryManager extends DatabaseConnector {
      * @return a list of all utensils
      */
     public List<Utensil> getUtensils() {
-        ArrayList<Ingredient> allUtensils = new ArrayList<>();
+        ArrayList<Utensil> allUtensils = new ArrayList<>();
 
         try {
             Statement utensilStatement = this.createStatement();
@@ -167,7 +167,7 @@ public class InventoryManager extends DatabaseConnector {
                 String name = utensilResultSet.getString("name");
                 int restockThreshold = utensilResultSet.getInt("restock_threshold");
 
-                Utensil utensil = new Utensil(name)
+                Utensil utensil = new Utensil.Builder(name)
                     .restockThreshold(restockThreshold)
                     .quantity(utensilResultSet.getInt("current_amount"))
                     .build();
@@ -285,7 +285,7 @@ public class InventoryManager extends DatabaseConnector {
                 int totalQuantity = restockResultSet.getInt("total_quantity");
                 int nextExpirationQuantity = restockResultSet.getInt("next_expiration_quantity");
 
-                Ingredient ingredient = Ingredient.Builder(name, unit, location)
+                Ingredient ingredient = new Ingredient.Builder(name, unit, location)
                     .lifespan(shelfLife)
                     .restockThreshold(restockThreshold)
                     .build();
