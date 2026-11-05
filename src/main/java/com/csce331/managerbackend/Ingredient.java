@@ -15,7 +15,7 @@ import java.time.LocalDate;
  *
  * @author Kedar Panchal
  */
-public class Ingredient implements Restockable {
+public class Ingredient {
     /** The name of the ingredient. */
     private final String name;
     /** The unit of measurement for the ingredient. */
