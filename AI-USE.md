@@ -23,3 +23,9 @@
 **Prompt: ** Prune any dead classes not used by the Managers as well. 
 
 **Output: ** The result of commit ID `16f7876`.
+
+## 5. Updating Backend Docstrings
+
+**Prompt: ** A lot of the docstrings are outdated. Make them up to date, and only include information a package consumer would need to know. Do not include information about implementation details, unless they cause a side effect a consumer would need to know.
+
+**Output: ** The result of commit ID `317297`.
