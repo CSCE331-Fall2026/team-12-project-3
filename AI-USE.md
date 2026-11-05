@@ -17,3 +17,9 @@
 **Prompt: ** Some of the classes (not the Manager ones) used in the cashierbackend and managerbackend packages contain methods not used by their respective managers. Prune these.
 
 **Output: ** The result of commit ID `3d7df4f`.
+
+## 4. Pruning Dead Classes
+
+**Prompt: ** Prune any dead classes not used by the Managers as well. 
+
+**Output: ** The result of commit ID `16f7876`.
