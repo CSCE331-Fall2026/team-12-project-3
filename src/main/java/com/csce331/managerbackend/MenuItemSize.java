@@ -1,36 +1,25 @@
 package com.csce331.managerbackend;
 
 /**
- * The size of a menu item, which can be small, medium, or large.
+ * The portion size of a menu item.
  *
  * @author Kedar Panchal
  */
 public enum MenuItemSize {
-    /** The small size. */
     SMALL("small"),
-
-    /** The medium size. */
     MEDIUM("medium"),
-
-    /** The large size. */
     LARGE("large");
 
-    /** The human-readable name of the size. */
     private final String displayName;
     
-    /**
-     * Constructs a new {@code MenuItemSize} with the specified human-readable name.
-     *
-     * @param displayName the display name for the size
-     */
     private MenuItemSize(String displayName) {
         this.displayName = displayName;
     }
 
     /**
-     * Returns the human-readable name of this size (for example, {@code "small"}).
+     * Returns the name used to show this size, such as {@code "small"}.
      *
-     * @return the display name for the size
+     * @return the display name
      */
     @Override
     public String toString() {

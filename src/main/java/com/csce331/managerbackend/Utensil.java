@@ -2,24 +2,16 @@ package com.csce331.managerbackend;
 
 /**
  * A utensil tracked in the inventory, with a current quantity on hand and a
- * threshold at or below which it should be restocked. Built using a
- * {@link Builder}.
+ * threshold at or below which it should be restocked. Instances are created
+ * through the {@link Builder}.
  *
  * @author Kedar Panchal
  */
 public class Utensil {
-    /** The name of the utensil. */
     private final String name;
-    /** The current quantity on hand. */
     private int quantity;
-    /** The quantity at or below which the utensil should be restocked. */
     private int restockThreshold;
 
-    /**
-     * Creates a utensil from the given builder.
-     *
-     * @param builder the builder holding the utensil's configuration
-     */
     private Utensil(Builder builder) {
         this.name = builder.name;
         this.quantity = builder.quantity;
@@ -59,11 +51,8 @@ public class Utensil {
      * @author Kedar Panchal
      */
     public static class Builder {
-        /** The name of the utensil being built. */
         private final String name;
-        /** The initial quantity for the utensil being built. */
         private int quantity;
-        /** The restock threshold for the utensil being built. */
         private int restockThreshold;
 
         /**

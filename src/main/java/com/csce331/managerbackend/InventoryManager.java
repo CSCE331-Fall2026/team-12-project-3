@@ -21,29 +21,23 @@ import com.csce331.common.DatabaseSetup;
 import com.csce331.common.ExceptionLogger;
 
 /**
- * Manages the restaurant's inventory, providing access to the ingredients and
- * utensils it holds, organized by the location each ingredient is kept in.
- * Supports restocking ingredients, changing their restock thresholds, reporting
- * which ingredients need restocking, discarding expired ingredients at the end
- * of the day, and reporting sales revenue per menu item.
+ * Reads and updates the restaurant's inventory: ingredients by storage
+ * location, utensils, restock thresholds, expired stock, and sales totals.
+ *
+ * <p>The manager keeps no inventory of its own; every call reads from or writes
+ * to the database. A failed query is logged and ends the program.
  *
  * @author Kedar Panchal
  */
 public class InventoryManager extends DatabaseConnector {
 
     /**
-     * Creates an inventory manager with a connection to the inventory database.
+     * Creates a manager connected to the inventory database.
      */
     public InventoryManager() {
         super();
     }
 
-    /**
-     * Parses an inventory location from its database string representation.
-     *
-     * @param inventoryType the raw inventory type value
-     * @return the matching inventory location
-     */
     private static InventoryLocation parseLocation(String inventoryType) {
         switch (inventoryType.toLowerCase()) {
             case "freezer" -> {
@@ -60,12 +54,6 @@ public class InventoryManager extends DatabaseConnector {
         }
     }
 
-    /**
-     * Parses a unit from its database string representation.
-     *
-     * @param unit the raw unit value
-     * @return the matching unit
-     */
     private static Unit parseUnit(String unit) {
         switch (unit.toLowerCase()) {
             case "kilograms" -> {
@@ -127,7 +115,7 @@ public class InventoryManager extends DatabaseConnector {
         try {
             Statement ingredientStatement = this.createStatement();
             String ingredientQuery = "SELECT * FROM ingredients " +
-                "WHERE inventory_type = " + location.toString().toLowerCase() + ";";
+                "WHERE inventory_type = '" + location.toString().toLowerCase() + "';";
             ResultSet ingredientResultSet = ingredientStatement.executeQuery(ingredientQuery);
 
             while (ingredientResultSet.next()) {
@@ -182,19 +170,22 @@ public class InventoryManager extends DatabaseConnector {
     }
     
     /**
-     * Adds the given amount to the quantity on hand of the named ingredient.
-     * Has no effect if no ingredient has that name. Utensils are not affected
-     * by this method.
+     * Adds the given amount to the named ingredient's stock for the current date,
+     * in that ingredient's unit. If the ingredient already has an inventory
+     * record for today, its quantity is increased; otherwise a record dated today
+     * is created. If no ingredient has that name, nothing changes.
      *
      * @param itemName the name of the ingredient to restock
-     * @param quantity the amount to add to the ingredient's quantity on hand
+     * @param quantity the amount to add
      */
     public void restock(String itemName, int quantity) {
         try {
             Statement restockStatement = this.createStatement();
-            String restockQuery = "UPDATE inventory " +
-                "SET current_amount = current_amount + " + quantity + " " +
-                "WHERE ingredient_id IN (SELECT id FROM ingredients WHERE name = '" + itemName + "');";
+            String restockQuery = "INSERT INTO inventory (ingredient_id, quantity, restock_date) " +
+                "SELECT id, " + quantity + ", CURRENT_DATE FROM ingredients " +
+                "WHERE name = '" + itemName + "' " +
+                "ON CONFLICT (ingredient_id, restock_date) " +
+                "DO UPDATE SET quantity = inventory.quantity + EXCLUDED.quantity;";
             restockStatement.executeUpdate(restockQuery);
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
@@ -203,9 +194,8 @@ public class InventoryManager extends DatabaseConnector {
     }
 
     /**
-     * Sets the restock threshold of the named ingredient, the quantity on hand at
-     * or below which it is considered to need restocking. Has no effect if no
-     * ingredient has that name. Utensils are not affected by this method.
+     * Sets the quantity at or below which the named ingredient should be
+     * restocked. If no ingredient has that name, nothing changes.
      *
      * @param itemName the name of the ingredient to update
      * @param threshold the new restock threshold
@@ -224,10 +214,11 @@ public class InventoryManager extends DatabaseConnector {
     }
 
     /**
-     * Ends the current day by discarding all expired inventory. Inventory is
-     * expired once it has been held for longer than the ingredient's shelf life.
+     * Removes expired stock, ending the current day. Stock is expired once it has
+     * been held longer than the ingredient's shelf life, and the removal is
+     * permanent.
      *
-     * @return the number of inventory entries that were removed
+     * @return the number of inventory records removed
      */
     public int endDay() {
         int deletionCount = 0;
@@ -247,28 +238,28 @@ public class InventoryManager extends DatabaseConnector {
     }
     
     /**
-     * Returns a restock report for the given location, with one entry for each
-     * ingredient stored there whose quantity on hand is at or below its restock
-     * threshold. Each entry reports the ingredient, its total quantity on hand,
-     * and how much of that quantity expires at the end of the day.
+     * Builds a restock report for one storage location. The report has one entry
+     * for each ingredient in that location whose stock is at or below its restock
+     * threshold, and each entry includes the amount of expired stock on hand.
      *
      * @param location the inventory location to report on
-     * @return the restock data for each ingredient in the location that needs to
-     *         be restocked
+     * @return restock data for the ingredients in that location that need
+     *         restocking
      */
     public List<IngredientRestockData> ingredientRestockReport(InventoryLocation location) {
         List <IngredientRestockData> restockReport = new ArrayList<>();
 
         try {
             Statement restockStatement = this.createStatement();
-            String restockQuery = "SELECT in.*, "
-                + "SUM(inv.quantity) AS expired_quantity, "
-                + "FROM ingredients AS in "
-                + "JOIN inventory AS inv "
-                + "ON in.id = inv.ingredient_id "
-                + "WHERE in.inventory_type = '" + location.toString().toLowerCase() + "' "
-                + "AND inv.restock_date + in.shelf_life < CURRENT_DATE "
-                + "GROUP BY in.id;";
+            String restockQuery = "SELECT ing.name, ing.unit, ing.shelf_life, "
+                + "ing.restock_threshold, "
+                + "SUM(CASE WHEN inv.restock_date + ing.shelf_life < CURRENT_DATE "
+                + "THEN inv.quantity ELSE 0 END) AS expired_quantity "
+                + "FROM ingredients AS ing "
+                + "LEFT JOIN inventory AS inv ON ing.id = inv.ingredient_id "
+                + "WHERE ing.inventory_type = '" + location.toString().toLowerCase() + "' "
+                + "GROUP BY ing.id "
+                + "HAVING COALESCE(SUM(inv.quantity), 0) <= ing.restock_threshold;";
             ResultSet restockResultSet = restockStatement.executeQuery(restockQuery);
 
             while (restockResultSet.next()) {
@@ -277,8 +268,6 @@ public class InventoryManager extends DatabaseConnector {
                 int shelfLife = restockResultSet.getInt("shelf_life");
                 int restockThreshold = restockResultSet.getInt("restock_threshold");
                 int expiredQuantity = restockResultSet.getInt("expired_quantity");
-                int daysUntilExpiration = restockResultSet.getInt("days_until_expiration");
-                int nextExpirationQuantity = restockResultSet.getInt("next_expiration_quantity");
 
                 Ingredient ingredient = new Ingredient.Builder(name, unit, location)
                     .lifespan(shelfLife)
@@ -298,12 +287,13 @@ public class InventoryManager extends DatabaseConnector {
     }
 
     /**
-     * Returns a report of sales revenue per menu item for the given date range.
+     * Returns the revenue each menu item earned, grouped by sale date. An order
+     * counts only if both its date and its time fall within the range.
      *
-     * @param startDate the start date and time of the report range
-     * @param endDate the end date and time of the report range
-     * @return a map of sale dates to maps of menu item names to their total sales
-     *         revenue on that date; dates with no sales are absent
+     * @param startDate the first date and time in the range
+     * @param endDate the last date and time in the range
+     * @return a map of sale dates to menu item names and their revenue on that
+     *         date; dates with no sales are absent
      */
     public Map<LocalDate, Map<String, Double>> menuItemSalesReport(
             LocalDateTime startDate, LocalDateTime endDate) {

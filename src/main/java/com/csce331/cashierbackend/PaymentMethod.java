@@ -1,23 +1,22 @@
 package com.csce331.cashierbackend;
 
 /**
- * Represents the supported payment methods available at checkout.
- * Maps directly to the PostgreSQL `payment_type` enum values.
+ * The payment methods accepted at checkout.
  */
 public enum PaymentMethod {
 
-    /** Cash payment. */
+    /** Cash. */
     CASH,
 
-    /** Credit card payment. */
+    /** Credit card. */
     CREDIT_CARD,
 
-    /** Debit card payment. */
+    /** Debit card. */
     DEBIT_CARD,
 
-    /** University dining dollars payment. */
+    /** University dining dollars. */
     DINING_DOLLARS,
 
-    /** University maroon meals payment. */
+    /** University maroon meals plan. */
     MAROON_MEALS
 }

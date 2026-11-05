@@ -1,16 +1,14 @@
 package com.csce331.common;
 
 /**
- * Utility class for logging exceptions in a consistent manner.
+ * Logs exceptions to standard error.
  */
 public class ExceptionLogger {
-    /** Private constructor to prevent instantiation. */
     private ExceptionLogger() {
     }
 
     /**
-     * Logs the given exception as one short line on standard error,
-     * so the terminal output stays minimal.
+     * Writes the exception's message to standard error as one line.
      *
      * @param e the exception to log
      */

@@ -22,29 +22,22 @@ import com.csce331.common.DatabaseConnector;
 import com.csce331.common.ExceptionLogger;
 
 /**
- * Manages cashier operations including querying menu items and executing
- * transactional database writes for customer orders.
+ * Handles cashier operations: browsing the menu and placing customer orders.
  *
- * <p>The manager keeps no order state of its own. Every method performs a
- * database query and returns the resulting data, so the current order is held
- * by the caller and passed in when the order is submitted.
+ * <p>The manager keeps no order state of its own. Each method reads from or
+ * writes to the database and returns the result, so the current order lives
+ * with the caller and is passed in at checkout. Database errors are logged;
+ * query methods return an empty result instead of throwing.
  */
 public class OrderManager extends DatabaseConnector {
 
     /**
-     * Creates an order manager with a connection to the cashier database.
+     * Creates a manager connected to the restaurant database.
      */
     public OrderManager() {
         super();
     }
 
-    /**
-     * Builds a cashier menu item from the current row of the given result set.
-     *
-     * @param menuItemResultSet the result set containing the menu item data
-     * @return the menu item represented by the current row
-     * @throws SQLException if an SQL error occurs while accessing the result set
-     */
     private static MenuItem mapRowToMenuItem(ResultSet menuItemResultSet) throws SQLException {
         int id = menuItemResultSet.getInt("id");
         String name = menuItemResultSet.getString("name");
@@ -61,9 +54,11 @@ public class OrderManager extends DatabaseConnector {
     }
 
     /**
-     * Retrieves up to 10 popular menu items from the database.
+     * Returns up to 10 active menu items. The query does not rank by sales, so
+     * treat the result as a sample of the menu. Every entry is marked available,
+     * since inactive items are filtered out.
      *
-     * @return a map of popular {@link MenuItem} instances mapped to their availability state
+     * @return up to 10 active menu items, each mapped to {@code true}
      */
     public Map<MenuItem, Boolean> getPopularItems() {
         Map<MenuItem, Boolean> popularItems = new HashMap<>();
@@ -85,10 +80,11 @@ public class OrderManager extends DatabaseConnector {
     }
 
     /**
-     * Retrieves menu items filtering by a specific category.
+     * Returns the active menu items in one category.
      *
-     * @param category the category string to query (e.g., "entree", "side", "drink", "appetizer")
-     * @return a map of matching {@link MenuItem} instances mapped to their availability state
+     * @param category the category name, one of {@code "entree"}, {@code "side"},
+     *                 {@code "drink"}, or {@code "appetizer"} (case-insensitive)
+     * @return the matching items, each mapped to {@code true}
      */
     public Map<MenuItem, Boolean> getCategoryItems(String category) {
         Map<MenuItem, Boolean> categoryItems = new HashMap<>();
@@ -113,7 +109,8 @@ public class OrderManager extends DatabaseConnector {
     }
 
     /**
-     * A completed order loaded from the database (read-only snapshot).
+     * An order read from the database. Its items, date, time, and total are
+     * fixed once it is loaded.
      *
      * <p>Example usage:
      * <pre>{@code
@@ -127,15 +124,10 @@ public class OrderManager extends DatabaseConnector {
      * }</pre>
      */
     public static class PlacedOrder {
-        /** The database identifier of the order. */
         private final int id;
-        /** The date the order was placed. */
         private final LocalDate date;
-        /** The time the order was placed. */
         private final LocalTime time;
-        /** The total price of the order. */
         private final double total;
-        /** The items in this order and their quantities. */
         private final Map<MenuItem, Integer> itemQuantities = new LinkedHashMap<>();
 
         /**
@@ -153,12 +145,6 @@ public class OrderManager extends DatabaseConnector {
             this.total = total;
         }
 
-        /**
-         * Adds an item to this order, merging quantities for duplicate items.
-         *
-         * @param item the item to add
-         * @param quantity the quantity of the item
-         */
         private void addItem(MenuItem item, int quantity) {
             itemQuantities.merge(item, quantity, Integer::sum);
         }
@@ -171,7 +157,7 @@ public class OrderManager extends DatabaseConnector {
         public int getId() { return id; }
 
         /**
-         * Returns a display name for the order.
+         * Returns a display name of the form {@code Order #12}.
          *
          * @return the order name
          */
@@ -216,23 +202,24 @@ public class OrderManager extends DatabaseConnector {
     }
 
     /**
-     * Retrieves every order placed on the given day.
+     * Returns every order placed on the given day, oldest first.
      *
      * @param day the date to look up
-     * @return the day's orders sorted by time (oldest first), or an empty list if there are
-     *         none or a database error occurs (errors are logged)
+     * @return the day's orders, or an empty list if there are none or the query
+     *         fails
      */
     public List<PlacedOrder> getOrders(LocalDate day) {
         return this.queryOrders(day, null);
     }
 
     /**
-     * Retrieves every order placed during a specific hour of the given day.
+     * Returns every order placed during one hour of the given day, oldest first.
      *
-     * @param day  the date to look up
-     * @param hour the hour of day on a 24-hour clock, 0-23 (e.g. 14 for 2:00-2:59 PM)
-     * @return the matching orders sorted by time (oldest first), or an empty list if there
-     *         are none or a database error occurs (errors are logged)
+     * @param day the date to look up
+     * @param hour the hour on a 24-hour clock, from 0 to 23 (14 means 2:00 to
+     *             2:59 PM)
+     * @return the matching orders, or an empty list if there are none or the
+     *         query fails
      * @throws IllegalArgumentException if {@code hour} is not between 0 and 23
      */
     public List<PlacedOrder> getOrders(LocalDate day, int hour) {
@@ -242,15 +229,6 @@ public class OrderManager extends DatabaseConnector {
         return this.queryOrders(day, hour);
     }
 
-    /**
-     * Shared query behind both {@code getOrders} overloads. Joins {@code orders},
-     * {@code order_menu}, and {@code menu_items}, then groups the rows into one
-     * {@link PlacedOrder} per order id.
-     *
-     * @param day  the date to filter on
-     * @param hour the hour (0-23) to filter on, or {@code null} for the whole day
-     * @return the matching orders sorted by time, or an empty list on error
-     */
     private List<PlacedOrder> queryOrders(LocalDate day, Integer hour) {
         String query =
                 "SELECT o.id AS order_id, o.order_date, o.order_time, o.price AS order_price, "
@@ -294,16 +272,20 @@ public class OrderManager extends DatabaseConnector {
     }
 
     /**
-     * Finalizes and submits an order to PostgreSQL in an atomic transaction.
-     * Inserts the record into the {@code orders} table and the corresponding items into
-     * {@code order_menu}, then removes the ingredients used from the {@code inventory} table.
-     * Inventory batches that expire soonest (but have not expired yet) are consumed first.
+     * Places an order at the current date and time and saves it in a single
+     * transaction. The items and quantities are stored with the order, and the
+     * ingredients they use are taken from inventory starting with the stock that
+     * expires soonest. Expired stock is not used. If inventory runs short, the
+     * order still goes through and the missing amount is not recorded.
+     *
+     * <p>The total is stored as given; the manager does not recompute it from the
+     * item prices.
      *
      * @param items      the ordered menu items and their quantities
-     * @param method     the {@link PaymentMethod} enum used for checkout
-     * @param totalPrice the grand total calculation for the order
-     * @return the generated database identifier of the placed order, or -1 if the order is
-     *         empty or the transaction fails (errors are logged and rolled back)
+     * @param method     the payment method used at checkout
+     * @param totalPrice the total to store for the order
+     * @return the new order's database identifier, or -1 if the order is empty or
+     *         the transaction fails and rolls back
      */
     public int order(Map<MenuItem, Integer> items, PaymentMethod method, double totalPrice) {
         if (items == null || items.isEmpty()) {
@@ -373,20 +355,6 @@ public class OrderManager extends DatabaseConnector {
         }
     }
 
-    /**
-     * Removes the ingredient quantities used by an order from the inventory batches
-     * that expire soonest. Expired batches are ignored, so the transaction never
-     * consumes inventory that should have been discarded at the end of the day.
-     *
-     * <p>Each batch is consumed completely before moving on to the next one. If the
-     * order needs more of an ingredient than the unexpired batches can supply, the
-     * available amount is removed and the rest is left unrecorded.
-     *
-     * @param conn    the transaction connection
-     * @param orderId the order whose ingredients should be removed
-     * @return the number of inventory batches that were updated
-     * @throws SQLException if a query or update fails
-     */
     private int removeInventoryForOrder(Connection conn, int orderId) throws SQLException {
         String usageQuery =
                 "SELECT mi.ingredient_id, SUM(mi.quantity * om.quantity) AS used "

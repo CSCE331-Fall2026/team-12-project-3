@@ -1,26 +1,17 @@
 package com.csce331.managerbackend;
 
 /**
- * A single menu item available to customers, tracking its name, price, size, and category. 
- * Instances are created through the {@link Builder}.
+ * A menu item on the restaurant's menu, with its name, price, size, and
+ * category. Instances are created through the {@link Builder}.
  *
  * @author Kedar Panchal
  */
 public class MenuItem {
-    /** The name of the menu item. */
     private final String name;
-    /** The price of the menu item. */
     private double price;
-    /** The size of the menu item. */
     private final MenuItemSize size;
-    /** The category of the menu item. */
     private final MenuItemCategory category;
 
-    /**
-     * Creates a menu item from the given builder.
-     *
-     * @param builder the builder holding the menu item's configuration
-     */
     private MenuItem(Builder builder) {
         this.name = builder.name;
         this.price = builder.price;
@@ -70,13 +61,9 @@ public class MenuItem {
      * @author Kedar Panchal
      */
     public static class Builder {
-        /** The name of the menu item being built. */
         private final String name;
-        /** The price of the menu item being built. */
         private double price;
-        /** The size of the menu item being built. */
         private MenuItemSize size;
-        /** The category of the menu item being built. */
         private final MenuItemCategory category;
     
         /**

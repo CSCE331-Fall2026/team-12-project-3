@@ -5,12 +5,11 @@ package com.csce331;
  * Application entry point.
  */
 public class App {
-    /** Private constructor to prevent instantiation. */
     private App() {
     }
 
     /**
-     * Program entry point.
+     * Starts the application.
      *
      * @param args the command-line arguments
      */

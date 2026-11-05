@@ -14,25 +14,22 @@ import com.csce331.common.DatabaseSetup;
 import com.csce331.common.ExceptionLogger;
 
 /**
- * A manager for the menu items in the restaurant, allowing for retrieval and
- * modification of menu items.
+ * Reads and updates the restaurant's menu. Queries return only active items;
+ * discontinuing an item keeps it in the database so past orders still refer to
+ * it.
+ *
+ * <p>A failed query is logged and ends the program.
  *
  * @author Kedar Panchal
  */
 public class MenuItemManager extends DatabaseConnector {
     /**
-     * Constructs a new {@code MenuItemManager} and loads all menu items from the database.
+     * Creates a manager connected to the menu database.
      */
     public MenuItemManager() {
         super();
     }
    
-    /**
-     * Parses a menu item size from its database string representation.
-     *
-     * @param sizeString the string representation of the menu item size
-     * @return the matching menu item size
-     */
     private MenuItemSize parseSize(String sizeString) {
         switch (sizeString.toLowerCase()) {
             case "small" -> {
@@ -50,12 +47,6 @@ public class MenuItemManager extends DatabaseConnector {
         }
     }
     
-    /**
-     * Parses a menu item category from its database string representation.
-     *
-     * @param categoryString the string representation of the menu item category
-     * @return the matching menu item category
-     */
     private MenuItemCategory parseCategory(String categoryString) {
         switch (categoryString.toLowerCase()) {
             case "side" -> {
@@ -77,10 +68,10 @@ public class MenuItemManager extends DatabaseConnector {
     }
     
     /**
-     * Returns a list of all active menu items customers can buy.
-     * Discontinued items are excluded.
+     * Returns every active menu item customers can order. Discontinued items are
+     * left out.
      *
-     * @return a list of all active menu items
+     * @return all active menu items
      */
     public List<MenuItem> getAllMenuItems() {
         ArrayList<MenuItem> menuItemsList = new ArrayList<>();
@@ -93,7 +84,7 @@ public class MenuItemManager extends DatabaseConnector {
             while (resultSet.next()) {
                 String name = resultSet.getString("name");
                 MenuItemSize size = this.parseSize(resultSet.getString("item_size"));
-                MenuItemCategory category = this.parseCategory(resultSet.getString("category"));
+                MenuItemCategory category = this.parseCategory(resultSet.getString("item_category"));
                 double price = resultSet.getDouble("price");
 
                 MenuItem item = new MenuItem.Builder(name, category)
@@ -111,17 +102,17 @@ public class MenuItemManager extends DatabaseConnector {
     }
     
     /**
-     * Returns a list of all menu items in the specified category.
+     * Returns the active menu items in one category.
      *
      * @param category the category to filter by
-     * @return a list of menu items in the specified category
+     * @return the menu items in that category
      */
     public List<MenuItem> getMenuItems(MenuItemCategory category) {
         ArrayList<MenuItem> menuItemsList = new ArrayList<>();
 
         try {
             String query = "SELECT * FROM menu_items "
-                + "WHERE category = '" + category.toString().toLowerCase() 
+                + "WHERE item_category = '" + category.toString().toLowerCase()
                 + "' AND is_active = TRUE";
             Statement statement = this.createStatement();
             ResultSet resultSet = statement.executeQuery(query);
@@ -146,18 +137,18 @@ public class MenuItemManager extends DatabaseConnector {
     }
     
     /**
-     * Updates the price of the specified menu item in the database. If the menu item does not 
-     * exist, no action is taken.
+     * Updates the price of a menu item in the database. An item matches on name
+     * and size, so both must match a stored item for the price to change.
      *
      * @param item the menu item to update
-     * @param newPrice the new price for the menu item
+     * @param newPrice the new price
      */
     public void updatePrice(MenuItem item, double newPrice) {
         try {
             String updateQuery = "UPDATE menu_items "
-                + "SET price = " + newPrice + " " +
-                "WHERE name = '" + item.getName() + " "
-                + "'AND item_size = '" + item.getSize().toString().toLowerCase() + "'";
+                + "SET price = " + newPrice + " "
+                + "WHERE name = '" + item.getName() + "' "
+                + "AND item_size = '" + item.getSize().toString().toLowerCase() + "'";
             Statement updateStatement = this.createStatement();
             updateStatement.executeUpdate(updateQuery);
         } catch (Exception e) {
@@ -167,9 +158,9 @@ public class MenuItemManager extends DatabaseConnector {
     }
     
     /**
-     * Discontinues the specified menu item, marking it inactive in the database and removing
-     * it from the in-memory inventory. Past orders referencing the item are preserved.
-     * If the menu item does not exist, no action is taken.
+     * Discontinues a menu item by marking it inactive, so it no longer appears in
+     * menu queries. The item is matched on name and size, and it stays in the
+     * database so past orders are unaffected.
      *
      * @param item the menu item to discontinue
      */
