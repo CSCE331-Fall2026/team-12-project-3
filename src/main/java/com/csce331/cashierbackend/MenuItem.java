@@ -58,30 +58,12 @@ public class MenuItem {
     }
 
     /**
-     * Sets the database ID of the menu item.
-     *
-     * @param id the unique item ID to set
-     */
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    /**
      * Retrieves the display name of the menu item.
      *
      * @return the item name
      */
     public String getName() {
         return name;
-    }
-
-    /**
-     * Sets the display name of the menu item.
-     *
-     * @param name the item name to set
-     */
-    public void setName(String name) {
-        this.name = name;
     }
 
     /**
@@ -94,30 +76,12 @@ public class MenuItem {
     }
 
     /**
-     * Sets the category of the menu item.
-     *
-     * @param itemCategory the item category to set
-     */
-    public void setItemCategory(String itemCategory) {
-        this.itemCategory = itemCategory;
-    }
-
-    /**
      * Retrieves the size of the menu item.
      *
      * @return the item size
      */
     public String getItemSize() {
         return itemSize;
-    }
-
-    /**
-     * Sets the size of the menu item.
-     *
-     * @param itemSize the item size to set
-     */
-    public void setItemSize(String itemSize) {
-        this.itemSize = itemSize;
     }
 
     /**
@@ -130,15 +94,6 @@ public class MenuItem {
     }
 
     /**
-     * Sets the price of the menu item.
-     *
-     * @param price the item price to set
-     */
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    /**
      * Retrieves the image URL of the menu item.
      *
      * @return the image URL string
@@ -148,29 +103,11 @@ public class MenuItem {
     }
 
     /**
-     * Sets the image URL of the menu item.
-     *
-     * @param imageURL the image URL string to set
-     */
-    public void setImageURL(String imageURL) {
-        this.imageURL = imageURL;
-    }
-
-    /**
      * Checks if the menu item is available for purchase.
      *
      * @return true if available, false otherwise
      */
     public boolean isAvailable() {
         return available;
-    }
-
-    /**
-     * Sets the availability status of the menu item.
-     *
-     * @param available true if available, false otherwise
-     */
-    public void setAvailable(boolean available) {
-        this.available = available;
     }
 }
