@@ -1,5 +1,7 @@
 package com.csce331;
 
+import io.javalin.Javalin;
+
 
 /**
  * Application entry point.
@@ -14,6 +16,8 @@ public class App {
      * @param args the command-line arguments
      */
     public static void main(String[] args) {
-        System.out.println("Hello, World!");
+        Javalin app = Javalin.create(config -> {
+            config.routes.get("/", ctx -> ctx.result("Hello World"));
+        }).start(8080)
     }
 }
