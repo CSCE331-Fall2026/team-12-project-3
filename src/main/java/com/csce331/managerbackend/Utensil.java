@@ -7,7 +7,7 @@ package com.csce331.managerbackend;
  *
  * @author Kedar Panchal
  */
-public class Utensil implements Restockable {
+public class Utensil {
     /** The name of the utensil. */
     private final String name;
     /** The current quantity on hand. */
