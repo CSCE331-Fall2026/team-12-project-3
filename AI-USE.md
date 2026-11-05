@@ -11,3 +11,9 @@
 **Prompt: ** Move the DatabaseConnector class to common and make OrderManager implement the DatabaseConnector abstract class. Then, refactor OrderManager to match the design style of the InventoryManager, and make it such that every function returns the result of the SQL statement instead of updating something in the internal state.
 
 **Output: ** The result of commit ID `594b743`.
+
+## 3. Pruning Dead Methods of Model Classes
+
+**Prompt: ** Some of the classes (not the Manager ones) used in the cashierbackend and managerbackend packages contain methods not used by their respective managers. Prune these.
+
+**Output: ** The result of commit ID `3d7df4f`.
