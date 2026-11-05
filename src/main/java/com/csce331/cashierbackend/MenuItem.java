@@ -1,42 +1,34 @@
 package com.csce331.cashierbackend;
 
 /**
- * Represents a menu item available for purchase.
- * Stores core item properties and provides equality based on unique item identifier.
+ * A menu item offered for sale, with its name, category, size, price, and
+ * image.
+ *
+ * <p>MenuItem does not override {@code equals} or {@code hashCode}, so two
+ * separately loaded copies of the same item are different objects. Compare
+ * {@link #getId() ids} when you need to tell whether two items are the same.
  */
 public class MenuItem {
 
-    /** The unique database identifier for the menu item. */
     private int id;
-
-    /** The display name of the menu item. */
     private String name;
-
-    /** The category of the menu item (e.g., entree, side, drink, appetizer). */
     private String itemCategory;
-
-    /** The size category of the menu item (e.g., small, medium, large). */
     private String itemSize;
-
-    /** The price of the menu item. */
     private double price;
-
-    /** The image URL or path associated with the menu item. */
     private String imageURL;
-
-    /** Indicates whether the menu item is currently available for ordering. */
     private boolean available;
 
     /**
-     * Constructs a new MenuItem instance with all properties.
+     * Creates a menu item.
      *
-     * @param id           the unique database identifier
-     * @param name         the display name of the menu item
-     * @param itemCategory the category of the item
-     * @param itemSize     the size of the item
-     * @param price        the price of the item
-     * @param imageURL     the URL string or file path for the item image
-     * @param available    true if item can be ordered, false otherwise
+     * @param id           the item's database identifier
+     * @param name         the display name
+     * @param itemCategory the category, such as {@code "entree"}
+     * @param itemSize     the size, such as {@code "medium"}
+     * @param price        the price
+     * @param imageURL     the image URL or path, or {@code null} if the item has
+     *                     no image
+     * @param available    whether the item can currently be ordered
      */
     public MenuItem(int id, String name, String itemCategory, String itemSize, double price, String imageURL, boolean available) {
         this.id = id;
@@ -49,16 +41,16 @@ public class MenuItem {
     }
 
     /**
-     * Retrieves the database ID of the menu item.
+     * Returns the item's database identifier.
      *
-     * @return the unique item ID
+     * @return the item ID
      */
     public int getId() {
         return id;
     }
 
     /**
-     * Retrieves the display name of the menu item.
+     * Returns the display name.
      *
      * @return the item name
      */
@@ -67,7 +59,7 @@ public class MenuItem {
     }
 
     /**
-     * Retrieves the category of the menu item.
+     * Returns the category.
      *
      * @return the item category
      */
@@ -76,7 +68,7 @@ public class MenuItem {
     }
 
     /**
-     * Retrieves the size of the menu item.
+     * Returns the size.
      *
      * @return the item size
      */
@@ -85,7 +77,7 @@ public class MenuItem {
     }
 
     /**
-     * Retrieves the price of the menu item.
+     * Returns the price.
      *
      * @return the item price
      */
@@ -94,18 +86,18 @@ public class MenuItem {
     }
 
     /**
-     * Retrieves the image URL of the menu item.
+     * Returns the image URL.
      *
-     * @return the image URL string
+     * @return the image URL, or {@code null} if the item has no image
      */
     public String getImageURL() {
         return imageURL;
     }
 
     /**
-     * Checks if the menu item is available for purchase.
+     * Returns whether the item can currently be ordered.
      *
-     * @return true if available, false otherwise
+     * @return {@code true} if available, {@code false} otherwise
      */
     public boolean isAvailable() {
         return available;

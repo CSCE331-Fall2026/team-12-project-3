@@ -1,35 +1,29 @@
 package com.csce331.managerbackend;
 
 /**
- * The unit of measurement used to quantify an ingredient.
+ * The unit used to measure an ingredient.
  *
  * @author Kedar Panchal
  */
 public enum Unit {
-    /** Measurement in kilograms. */
+    /** Kilograms, shown as {@code "kg"}. */
     KILOGRAMS("kg"),
-    /** Measurement in liters. */
+    /** Liters, shown as {@code "L"}. */
     LITERS("L"),
-    /** Measurement by individual item count. */
+    /** Individual items, which have no abbreviation and show as an empty string. */
     ITEMS("");
 
-    /** The human-readable abbreviation for the unit. */
     private final String unit;
     
-    /**
-     * Constructs a new {@code Unit} with the specified human-readable abbreviation.
-     *
-     * @param unit the display abbreviation for the unit
-     */
     private Unit(String unit) {
         this.unit = unit;
     }
 
     /**
-     * Returns the human-readable abbreviation for this unit (for example,
-     * {@code "kg"} or {@code "L"}).
+     * Returns the abbreviation for this unit. {@link #ITEMS} returns an empty
+     * string because individual items are counted without one.
      *
-     * @return the display abbreviation for the unit
+     * @return the display abbreviation
      */
     @Override
     public String toString() {

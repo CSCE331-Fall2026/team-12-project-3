@@ -8,30 +8,20 @@ import java.util.LinkedList;
 import java.time.LocalDate;
 
 /**
- * An ingredient tracked in the inventory, described by its name, unit of
- * measurement, storage location, shelf life in days, and the quantity on hand at
- * or below which it should be restocked. These values are fixed once the
- * ingredient is built. Instances are created through the {@link Builder}.
+ * An ingredient tracked in the inventory, with its name, unit of measurement,
+ * storage location, shelf life in days, and the quantity at or below which it
+ * should be restocked. Instances are immutable and created through the
+ * {@link Builder}.
  *
  * @author Kedar Panchal
  */
 public class Ingredient {
-    /** The name of the ingredient. */
     private final String name;
-    /** The unit of measurement for the ingredient. */
     private final Unit unit;
-    /** The storage location of the ingredient. */
     private final InventoryLocation location;
-    /** The shelf life of the ingredient in days. */
     private final int lifespan;
-    /** The quantity at or below which the ingredient should be restocked. */
     private int restockThreshold;
 
-    /**
-     * Creates an ingredient from the given builder.
-     *
-     * @param builder the builder holding the ingredient's configuration
-     */
     private Ingredient(Builder builder) {
         this.name = builder.name;
         this.unit = builder.unit;
@@ -92,15 +82,10 @@ public class Ingredient {
      * @author Kedar Panchal
      */
     public static class Builder {
-        /** The name of the ingredient being built. */
         private final String name;
-        /** The unit of measurement for the ingredient being built. */
         private final Unit unit;
-        /** The storage location of the ingredient being built. */
         private final InventoryLocation location;
-        /** The shelf life in days for the ingredient being built. */
         private int lifespan;
-        /** The restock threshold for the ingredient being built. */
         private int restockThreshold;
 
         /**
@@ -131,7 +116,7 @@ public class Ingredient {
         }
 
         /**
-         * Sets the quantity on hand at or below which the ingredient should be
+         * Sets the quantity at or below which the ingredient should be
          * restocked.
          *
          * @param restockThreshold the restock threshold, which must be positive

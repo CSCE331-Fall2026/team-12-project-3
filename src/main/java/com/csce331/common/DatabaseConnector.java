@@ -5,16 +5,24 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 
 /**
- * An abstract class that provides a connection to the database for its subclasses.
+ * Base class for managers that work with the restaurant database and need a
+ * shared JDBC connection.
+ *
+ * <p>Creating a connector opens a connection using the credentials in
+ * {@code DatabaseSetup}. If the database cannot be reached, the error is logged
+ * and the process exits, so a manager is never left with a dead connection.
+ * Subclasses can get the open connection from {@link #getConnection()} when they
+ * need prepared statements or transactions.
  *
  * @author Kedar Panchal
  */
 public abstract class DatabaseConnector {
-    /** The open JDBC connection used by subclasses. */
     private Connection connection;
 
     /**
-     * Constructs a new {@code DatabaseConnector} and establishes a connection to the database.
+     * Opens a connection to the database.
+     *
+     * <p>If the connection fails, the error is logged and the process exits.
      */
     public DatabaseConnector() {
         try {
@@ -27,9 +35,12 @@ public abstract class DatabaseConnector {
     }
 
     /**
-     * Creates a new {@code Statement} object for executing SQL queries.
+     * Creates a statement for running SQL against the database.
      *
-     * @return a new {@code Statement} object
+     * <p>If the statement cannot be created, the error is logged and the process
+     * exits, so this method never returns {@code null}.
+     *
+     * @return a new statement
      */
     public Statement createStatement() {
         try {
@@ -53,9 +64,9 @@ public abstract class DatabaseConnector {
     }
 
     /**
-     * Closes the connection to the database.
+     * Closes the database connection. Errors are logged rather than thrown.
      *
-     * @return {@code true} if the connection was closed successfully, {@code false} otherwise
+     * @return {@code true} if the connection closed, {@code false} otherwise
      */
     public boolean closeConnection() {
         try {

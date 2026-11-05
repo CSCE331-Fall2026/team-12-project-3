@@ -1,13 +1,13 @@
 package com.csce331.common;
 
 /**
- * Example template for database connection credentials.
+ * Template for the database connection credentials.
  *
- * <p>CSCE 331 database setup example whose purpose is to keep real user names
- * and passwords private.
+ * <p>Copy this class to {@code DatabaseSetup.java} in the same package and
+ * replace the placeholders with your team's URL, user name, and password. The
+ * real file is excluded from version control.
  */
 public final class DatabaseSetupExample  {
-    /** Private constructor to prevent instantiation. */
     private DatabaseSetupExample() {
     }
 
