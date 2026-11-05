@@ -54,61 +54,6 @@ public class Utensil implements Restockable {
     }
 
     /**
-     * Sets the current quantity on hand.
-     *
-     * @param quantity the new quantity
-     */
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-    
-    /**
-     * Sets the quantity at or below which the utensil should be restocked.
-     *
-     * @param threshold the new restock threshold
-     * @return the SQL query to update the utensil's restock threshold in the database
-     * @throws IllegalArgumentException if the threshold is not positive
-     */
-    public String setRestockThreshold(int threshold) {
-        if (threshold <= 0) {
-            throw new IllegalArgumentException("Utensil restock threshold must be positive");
-        }
-        this.restockThreshold = threshold;
-        return "UPDATE utensils " +
-            "SET restock_threshold = " + threshold + " " +
-            "WHERE name = '" + this.name + "';";
-    }
-    
-    /**
-     * Increases the current quantity on hand by the given amount.
-     *
-     * @param quantity the amount to add to the current quantity
-     * @return the SQL query to update the utensil's quantity in the database
-     * @throws IllegalArgumentException if the quantity is not positive
-     */
-    public String restock(int quantity) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Restock quantity must be positive");
-        }
-
-        this.quantity += quantity;
-        return "UPDATE utensils " +
-            "SET current_amount = " + this.quantity + " " +
-            "WHERE name = '" + this.name + "';";
-    }
-
-    /**
-     * Returns whether the current quantity has reached or fallen below the
-     * restock threshold.
-     *
-     * @return {@code true} if the utensil needs restocking, {@code false}
-     *         otherwise
-     */
-    public boolean isRestockNeeded() {
-        return this.quantity <= this.restockThreshold;
-    }
-
-    /**
      * Builder for constructing {@link Utensil} instances.
      *
      * @author Kedar Panchal
