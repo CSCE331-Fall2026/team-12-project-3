@@ -9,7 +9,9 @@ import io.javalin.http.Context;
 
 import com.csce331.managerbackend.InventoryManager;
 import com.csce331.managerbackend.Ingredient;
+import com.csce331.managerbackend.Utensil;
 import com.csce331.managerbackend.InventoryLocation;
+import com.csce331.managerbackend.IngredientRestockData;
 
 public class InventoryController {
     private static InventoryManager inventoryManager = new InventoryManager();
@@ -42,27 +44,75 @@ public class InventoryController {
     public static void ingredientsByLocation(Context ctx) {
         String inventoryType = ctx.pathParam("inventoryLocation");
         try {
+            if (inventoryType.equals("utensils")) {
+                List<Utensil> utensils = inventoryManager.getUtensils();
+                ctx.status(200).json(utensils);
+                return;
+            }
+
             InventoryLocation location = parseLocation(inventoryType);
             List<Ingredient> ingredients = inventoryManager.getIngredientsByLocation(location);
             ctx.status(200).json(ingredients);
         } catch (IllegalArgumentException e) {
             ctx.status(400).result(e.getMessage());
-        } catch (Exception e) {
+        } catch (SQLException e) {
             ctx.status(500).result("Error retrieving ingredients: " + e.getMessage());
         }
     }
 
     public static void restock(Context ctx) {
+        String name = ctx.pathParam("name");
         try {
-            String name = ctx.pathParam("name");
             int quantity = Integer.parseInt(ctx.queryParam("quantity"));
-            inventoryManager.restock(name, quantity);
-            // TODO: Return a 201 if a new inventory item was created
-            ctx.status(200);
+            ctx.status(inventoryManager.restock(name, quantity) ? 201 : 200);
         } catch (SQLException e) {
             ctx.status(500).result("Error restocking ingredients: " + e.getMessage());
         } catch (NumberFormatException e) {
             ctx.status(400).result("Invalid quantity format: " + e.getMessage());
+        }
+    }
+
+    public static void setRestockThreshold(Context ctx) {
+        String name = ctx.pathParam("name");
+        try {
+            int threshold = Integer.parseInt(ctx.queryParam("threshold"));
+            inventoryManager.setRestockThreshold(name, threshold);
+            ctx.status(200);
+        } catch (SQLException e) {
+            ctx.status(500).result("Error restocking ingredients: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            ctx.status(400).result("Invalid threshold format: " + e.getMessage());
+        }
+    }
+
+    public static void endDay(Context ctx) {
+        try {
+            int deletionCount = inventoryManager.endDay();
+            if (deletionCount == 0) {
+                ctx.status(204);
+            } else {
+                ctx.status(200).result(deletionCount);
+            }
+        } catch (SQLException e) {
+            ctx.status(500).result("Error deleting expired ingredients: " + e.getMessage());
+        }
+    }
+
+    public static void restockReport(Context ctx) {
+        String inventoryType = ctx.pathParam("inventoryLocation");
+        try {
+            if (inventoryType.equals("utensils")) {
+                List<Utensil> report = inventoryManager.utensilRestockReport();
+                ctx.status(200).json(report);
+                return;
+            }
+            InventoryLocation location = parseLocation(inventoryType);
+            List<IngredientRestockData> report = inventoryManager.ingredientRestockReport(location);
+            ctx.status(200).json(report);
+        } catch (SQLException e) {
+            ctx.status(500).result("Error finding restock report: " + e.getMessage());
+        } catch (IllegalArugumentException e) {
+            ctx.status(400).result(e.getMessage());
         }
     }
 }

@@ -176,4 +176,52 @@ public class MenuItemManager extends DatabaseConnector {
             System.exit(0);
         }
     }
+
+    /**
+     * Returns the revenue each menu item earned, grouped by sale date. An order
+     * counts only if both its date and its time fall within the range.
+     *
+     * @param startDate the first date and time in the range
+     * @param endDate the last date and time in the range
+     * @return a map of sale dates to menu item names and their revenue on that
+     *         date; dates with no sales are absent
+     */
+    public Map<LocalDate, Map<String, Double>> menuItemSalesReport(
+            LocalDateTime startDate, LocalDateTime endDate) {
+        LocalDate sqlStartDate = startDate.toLocalDate();
+        LocalDate sqlEndDate = endDate.toLocalDate();
+        LocalTime sqlStartTime = startDate.toLocalTime();
+        LocalTime sqlEndTime = endDate.toLocalTime();
+        Map<LocalDate, Map<String, Double>> result = new HashMap<>();
+
+        try {
+            Statement salesStatement = this.createStatement();
+            String salesQuery =
+                "SELECT mi.name, o.order_date AS sale_date, " +
+                "SUM(om.quantity * mi.price) AS total_sales " +
+                "FROM order_menu AS om " +
+                "JOIN orders AS o " +
+                "ON om.order_id = o.id " +
+                "JOIN menu_items AS mi " +
+                "ON om.menu_item_id = mi.id " +
+                "WHERE o.order_date BETWEEN '" + sqlStartDate.toString() + "' " +
+                "AND '" + sqlEndDate.toString() + "' " +
+                "AND o.order_time BETWEEN '" + sqlStartTime.toString() + "' " +
+                "AND '" + sqlEndTime.toString() + "' " +
+                "GROUP BY mi.name, o.order_date;";
+
+            ResultSet salesResultSet = salesStatement.executeQuery(salesQuery);
+            while (salesResultSet.next()) {
+                LocalDate saleDate = salesResultSet.getDate("sale_date").toLocalDate();
+                result.putIfAbsent(saleDate, new HashMap<>());
+                result.get(saleDate)
+                    .put(salesResultSet.getString("name"), salesResultSet.getDouble("total_sales"));
+            }
+        } catch (Exception e) {
+            ExceptionLogger.logException(e);
+            System.exit(0);
+        }
+        return result;
+    }
+
 }
