@@ -114,8 +114,8 @@ public class InventoryManager extends DatabaseConnector {
 
         try {
             Statement ingredientStatement = this.createStatement();
-            String ingredientQuery = "SELECT * FROM ingredients " +
-                "WHERE inventory_type = '" + location.toString().toLowerCase() + "';";
+            String ingredientQuery = "SELECT * FROM ingredients "
+                + "WHERE inventory_type = '" + location.toString().toLowerCase() + "';";
             ResultSet ingredientResultSet = ingredientStatement.executeQuery(ingredientQuery);
 
             while (ingredientResultSet.next()) {
@@ -163,7 +163,7 @@ public class InventoryManager extends DatabaseConnector {
             }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
+            throw e;
         }
 
         return allUtensils;
@@ -177,19 +177,30 @@ public class InventoryManager extends DatabaseConnector {
      *
      * @param itemName the name of the ingredient to restock
      * @param quantity the amount to add
+     * @return true if a new row was created, false otherwise
      */
-    public void restock(String itemName, int quantity) {
+    public boolean restock(String itemName, int quantity) {
         try {
             Statement restockStatement = this.createStatement();
-            String restockQuery = "INSERT INTO inventory (ingredient_id, quantity, restock_date) " +
-                "SELECT id, " + quantity + ", CURRENT_DATE FROM ingredients " +
-                "WHERE name = '" + itemName + "' " +
-                "ON CONFLICT (ingredient_id, restock_date) " +
-                "DO UPDATE SET quantity = inventory.quantity + EXCLUDED.quantity;";
+
+            String rowsCount = "SELECT COUNT(*) AS items FROM inventory;";
+            ResultSet rowsCountSet = restockStatement.executeQuery(rowsCount);
+            rowsCountSet.next();
+            int oldRowsCount = rowsCountSet.getInt("items");
+
+            String restockQuery = "INSERT INTO inventory (ingredient_id, quantity, restock_date) "
+                + "SELECT id, " + quantity + ", CURRENT_DATE FROM ingredients "
+                + "WHERE name = '" + itemName + "' " +
+                + "ON CONFLICT (ingredient_id, restock_date) "
+                + "DO UPDATE SET quantity = inventory.quantity + EXCLUDED.quantity;";
             restockStatement.executeUpdate(restockQuery);
+
+            rowsCountSet = restockStatement.executeQuery(rowsCount);
+            rowsCountSet.next();
+            return rowsCountSet.getInt("items") > oldRowsCount;
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
+            throw e;
         }
     }
 
@@ -203,13 +214,13 @@ public class InventoryManager extends DatabaseConnector {
     public void setRestockThreshold(String itemName, int threshold) {
         try {
             Statement thresholdStatement = this.createStatement();
-            String thresholdQuery = "UPDATE ingredients " +
-                "SET restock_threshold = " + threshold + " " +
-                "WHERE name = '" + itemName + "';";
+            String thresholdQuery = "UPDATE ingredients "
+                + "SET restock_threshold = " + threshold + " "
+                + "WHERE name = '" + itemName + "';";
             thresholdStatement.executeUpdate(thresholdQuery);
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
+            throw e;
         }
     }
 
@@ -224,14 +235,14 @@ public class InventoryManager extends DatabaseConnector {
         int deletionCount = 0;
         try {
             Statement deleteStatement = this.createStatement();
-            String deleteQuery = "DELETE FROM inventory " +
-                "USING ingredients " +
-                "WHERE inventory.ingredient_id = ingredients.id " +
-                "AND (inventory.restock_date + ingredients.shelf_life) < CURRENT_DATE;";
+            String deleteQuery = "DELETE FROM inventory "
+                + "USING ingredients " +
+                + "WHERE inventory.ingredient_id = ingredients.id "
+                + "AND (inventory.restock_date + ingredients.shelf_life) < CURRENT_DATE;";
             deletionCount = deleteStatement.executeUpdate(deleteQuery);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
+            throw e;
         }
 
         return deletionCount;
@@ -278,58 +289,41 @@ public class InventoryManager extends DatabaseConnector {
                         expiredQuantity);
                 restockReport.add(restockData);
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
+            throw e;
         }
 
         return restockReport;
     }
 
-    /**
-     * Returns the revenue each menu item earned, grouped by sale date. An order
-     * counts only if both its date and its time fall within the range.
-     *
-     * @param startDate the first date and time in the range
-     * @param endDate the last date and time in the range
-     * @return a map of sale dates to menu item names and their revenue on that
-     *         date; dates with no sales are absent
-     */
-    public Map<LocalDate, Map<String, Double>> menuItemSalesReport(
-            LocalDateTime startDate, LocalDateTime endDate) {
-        LocalDate sqlStartDate = startDate.toLocalDate();
-        LocalDate sqlEndDate = endDate.toLocalDate();
-        LocalTime sqlStartTime = startDate.toLocalTime();
-        LocalTime sqlEndTime = endDate.toLocalTime();
-        Map<LocalDate, Map<String, Double>> result = new HashMap<>();
+    public List<Utensil> utensilRestockReport() {
+        List<Utensil> restockReport = new ArrayList<>();
 
         try {
-            Statement salesStatement = this.createStatement();
-            String salesQuery =
-                "SELECT mi.name, o.order_date AS sale_date, " +
-                "SUM(om.quantity * mi.price) AS total_sales " +
-                "FROM order_menu AS om " +
-                "JOIN orders AS o " +
-                "ON om.order_id = o.id " +
-                "JOIN menu_items AS mi " +
-                "ON om.menu_item_id = mi.id " +
-                "WHERE o.order_date BETWEEN '" + sqlStartDate.toString() + "' " +
-                "AND '" + sqlEndDate.toString() + "' " +
-                "AND o.order_time BETWEEN '" + sqlStartTime.toString() + "' " +
-                "AND '" + sqlEndTime.toString() + "' " +
-                "GROUP BY mi.name, o.order_date;";
+            Statement restockStatement = this.createStatement();
+            String restockQuery = "SELECT name, current_amount, restock_threshold from utensils "
+                + "WHERE current_amount <= restock_threshold;";
 
-            ResultSet salesResultSet = salesStatement.executeQuery(salesQuery);
-            while (salesResultSet.next()) {
-                LocalDate saleDate = salesResultSet.getDate("sale_date").toLocalDate();
-                result.putIfAbsent(saleDate, new HashMap<>());
-                result.get(saleDate)
-                    .put(salesResultSet.getString("name"), salesResultSet.getDouble("total_sales"));
+            ResultSet restockResultSet = restockStatement.executeQuery(restockQuery);
+
+            while (restockResultSet.next()) {
+                String name = restockResultSet.getString("name");
+                int quantity = restockResultSet.getInt("current_amount");
+                int restockThreshold = restockResultset.getString("restock_threshold");
+
+                Utensil utensil = new Utensil.Builder(name)
+                        .quantity(quantity)
+                        .restockThreshold(restockThreshold)
+                        .build();
+
+                restockReport.add(utensil);
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
+            throw e;
         }
-        return result;
+
+        return restockReport;
     }
 }
