@@ -74,7 +74,7 @@ public class InventoryManager extends DatabaseConnector {
      *
      * @return a list of all ingredients
      */
-    public List<Ingredient> getAllIngredients() {
+    public List<Ingredient> getIngredients() {
         ArrayList<Ingredient> allIngredients = new ArrayList<>();
 
         try {
@@ -97,7 +97,7 @@ public class InventoryManager extends DatabaseConnector {
             }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
+            throw e;
         }
 
         return allIngredients;
