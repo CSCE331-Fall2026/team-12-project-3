@@ -17,7 +17,7 @@ public class App {
      */
     public static void main(String[] args) {
         Javalin app = Javalin.create(config -> {
-            config.routes.get("/", ctx -> ctx.result("Hello World"));
+            config.routes.get("/", ctx -> ctx.result("Up and running!"));
         }).start(8080);
     }
 }
