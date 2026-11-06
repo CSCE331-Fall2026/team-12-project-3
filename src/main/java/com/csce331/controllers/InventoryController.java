@@ -42,7 +42,7 @@ public class InventoryController {
     }
 
     public static void ingredientsByLocation(Context ctx) {
-        String inventoryType = ctx.pathParam("inventoryLocation");
+        String inventoryType = ctx.pathParam("location");
         try {
             if (inventoryType.equals("utensils")) {
                 List<Utensil> utensils = inventoryManager.getUtensils();
@@ -59,7 +59,8 @@ public class InventoryController {
             ctx.status(500).result("Error retrieving ingredients: " + e.getMessage());
         }
     }
-
+    
+    // TODO: Add utensil restocking
     public static void restock(Context ctx) {
         String name = ctx.pathParam("name");
         try {
@@ -99,7 +100,7 @@ public class InventoryController {
     }
 
     public static void restockReport(Context ctx) {
-        String inventoryType = ctx.pathParam("inventoryLocation");
+        String inventoryType = ctx.pathParam("location");
         try {
             if (inventoryType.equals("utensils")) {
                 List<Utensil> report = inventoryManager.utensilRestockReport();
