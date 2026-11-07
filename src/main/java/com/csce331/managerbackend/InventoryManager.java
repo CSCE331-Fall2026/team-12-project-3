@@ -38,6 +38,15 @@ public class InventoryManager extends DatabaseConnector {
         super();
     }
 
+    /**
+     * Converts an inventory location name stored in the database into the
+     * matching inventory location.
+     *
+     * @param inventoryType the location name, case-insensitive
+     * @return the matching inventory location
+     * @throws IllegalArgumentException if the name is not freezer,
+     *         refrigerator, or pantry
+     */
     private static InventoryLocation parseLocation(String inventoryType) {
         switch (inventoryType.toLowerCase()) {
             case "freezer" -> {
@@ -54,6 +63,14 @@ public class InventoryManager extends DatabaseConnector {
         }
     }
 
+    /**
+     * Converts a unit name stored in the database into the matching unit.
+     *
+     * @param unit the unit name, case-insensitive
+     * @return the matching unit
+     * @throws IllegalArgumentException if the name is not kilograms, liters, or
+     *         items
+     */
     private static Unit parseUnit(String unit) {
         switch (unit.toLowerCase()) {
             case "kilograms" -> {
@@ -204,6 +221,13 @@ public class InventoryManager extends DatabaseConnector {
         }
     }
 
+    /**
+     * Adds the given amount to the named utensil's stock. If no utensil has
+     * that name, nothing changes.
+     *
+     * @param itemName the name of the utensil to restock
+     * @param quantity the amount to add
+     */
     public void restockUtensils(String itemName, int quantity) {
         try {
             Statement restockStatement = this.createStatement();
@@ -238,6 +262,13 @@ public class InventoryManager extends DatabaseConnector {
         }
     }
 
+    /**
+     * Sets the quantity at or below which the named utensil should be
+     * restocked. If no utensil has that name, nothing changes.
+     *
+     * @param itemName the name of the utensil to update
+     * @param threshold the new restock threshold
+     */
     public void setUtensilRestockThreshold(String itemName, int threshold) {
         try {
             Statement thresholdStatement = this.createStatement();
@@ -324,6 +355,12 @@ public class InventoryManager extends DatabaseConnector {
         return restockReport;
     }
 
+    /**
+     * Builds a restock report for the utensils. The report has one entry for
+     * each utensil whose stock is at or below its restock threshold.
+     *
+     * @return restock data for the utensils that need restocking
+     */
     public List<Utensil> utensilRestockReport() {
         List<Utensil> restockReport = new ArrayList<>();
 

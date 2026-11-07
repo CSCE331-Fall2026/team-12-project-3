@@ -13,9 +13,27 @@ import com.csce331.managerbackend.Utensil;
 import com.csce331.managerbackend.InventoryLocation;
 import com.csce331.managerbackend.IngredientRestockData;
 
+/**
+ * Handles the inventory HTTP endpoints: ingredients and utensils by storage
+ * location, restocking, restock thresholds, end of day, and restock reports.
+ *
+ * <p>Each method takes the Javalin request context, delegates the work to an
+ * {@link InventoryManager}, and writes the status code and body of the
+ * response itself. Query failures are reported to the client as a 500 with
+ * the error message rather than being thrown.
+ */
 public class InventoryController {
     private static InventoryManager inventoryManager = new InventoryManager();
 
+    /**
+     * Converts a path segment from the request into the matching inventory
+     * location.
+     *
+     * @param inventoryType the location name from the request, case-insensitive
+     * @return the matching inventory location
+     * @throws IllegalArgumentException if the name is not freezer,
+     *         refrigerator, or pantry
+     */
     private static InventoryLocation parseLocation(String inventoryType) {
         switch (inventoryType.toLowerCase()) {
             case "freezer" -> {
@@ -32,6 +50,13 @@ public class InventoryController {
         }
     }
 
+    /**
+     * Responds with every ingredient in the inventory as JSON.
+     *
+     * <p>Responds 500 with an error message if the database query fails.
+     *
+     * @param ctx the request context
+     */
     public static void allIngredients(Context ctx) {
         try {
             List<Ingredient> ingredients = inventoryManager.getIngredients();
@@ -41,6 +66,15 @@ public class InventoryController {
         }
     }
 
+    /**
+     * Responds with the ingredients stored in the location named in the path.
+     * A path of "utensils" returns every utensil instead.
+     *
+     * <p>Responds 400 for an unknown location and 500 if the database query
+     * fails.
+     *
+     * @param ctx the request context
+     */
     public static void ingredientsByLocation(Context ctx) {
         String inventoryType = ctx.pathParam("location");
         try {
@@ -60,6 +94,19 @@ public class InventoryController {
         }
     }
     
+    /**
+     * Adds stock to the item named in the path. The amount comes from the
+     * {@code quantity} query parameter, and zero is used when it is missing.
+     * A {@code isUtensil} query parameter of true restocks a utensil;
+     * otherwise an ingredient is restocked.
+     *
+     * <p>Responds 201 when the ingredient's today-dated stock row is created
+     * and 200 when existing stock is increased or a utensil is updated.
+     * Responds 400 for a non-numeric quantity and 500 if the database update
+     * fails.
+     *
+     * @param ctx the request context
+     */
     public static void restock(Context ctx) {
         String name = ctx.pathParam("name");
         try {
@@ -81,6 +128,16 @@ public class InventoryController {
         }
     }
 
+    /**
+     * Sets the restock threshold of the item named in the path to the
+     * {@code threshold} query parameter. A {@code isUtensil} query parameter
+     * of true updates a utensil; otherwise an ingredient is updated.
+     *
+     * <p>Responds 200 on success, 400 for a non-numeric threshold and 500 if
+     * the database update fails.
+     *
+     * @param ctx the request context
+     */
     public static void setRestockThreshold(Context ctx) {
         String name = ctx.pathParam("name");
         String isUtensilParam = ctx.queryParam("isUtensil");
@@ -101,6 +158,14 @@ public class InventoryController {
         }
     }
 
+    /**
+     * Ends the current day by deleting stock that has outlived its shelf life.
+     *
+     * <p>Responds 204 when nothing was deleted and 200 with the number of
+     * deleted records otherwise, or 500 if the delete fails.
+     *
+     * @param ctx the request context
+     */
     public static void endDay(Context ctx) {
         try {
             int deletionCount = inventoryManager.endDay();
@@ -114,6 +179,16 @@ public class InventoryController {
         }
     }
 
+    /**
+     * Responds with the restock report for the location named in the path, or
+     * for every utensil when the path is "utensils". The report lists the items
+     * at or below their restock threshold.
+     *
+     * <p>Responds 400 for an unknown location and 500 if the database query
+     * fails.
+     *
+     * @param ctx the request context
+     */
     public static void restockReport(Context ctx) {
         String inventoryType = ctx.pathParam("location");
         try {
