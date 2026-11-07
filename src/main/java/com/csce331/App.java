@@ -8,9 +8,6 @@ import com.csce331.controllers.InventoryController;
  * Application entry point.
  */
 public class App {
-    private App() {
-    }
-
     /**
      * Starts the application.
      *
