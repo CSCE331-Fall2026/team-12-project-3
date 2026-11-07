@@ -29,3 +29,9 @@
 **Prompt: ** A lot of the docstrings are outdated. Make them up to date, and only include information a package consumer would need to know. Do not include information about implementation details, unless they cause a side effect a consumer would need to know.
 
 **Output: ** The result of commit ID `317297`.
+
+## 6. Documenting InventoryController
+
+**Prompt: ** Add docstrings to the undocumented functions in InventoryController and InventoryManager, and document InventoryController.
+
+**Output: ** The result of commit ID `9c069d1`.
