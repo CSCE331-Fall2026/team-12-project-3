@@ -115,7 +115,7 @@ public class MenuItemManager extends DatabaseConnector {
      * @param item the menu item to update
      * @param newPrice the new price
      */
-    public void updatePrice(String name, MenuItemSize size, double newPrice) {
+    public void updatePrice(String name, MenuItemSize size, double newPrice) throws SQLException {
         try {
             String updateQuery = "UPDATE menu_items "
                 + "SET price = " + newPrice + " "
@@ -123,9 +123,9 @@ public class MenuItemManager extends DatabaseConnector {
                 + "AND item_size = '" + size.toString().toLowerCase() + "'";
             Statement updateStatement = this.createStatement();
             updateStatement.executeUpdate(updateQuery);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
+            throw e;
         }
     }
     
@@ -136,16 +136,16 @@ public class MenuItemManager extends DatabaseConnector {
      *
      * @param item the menu item to discontinue
      */
-    public void discontinueMenuItem(String name, MenuItemSize size) {
+    public void discontinueMenuItem(String name, MenuItemSize size) throws SQLException {
         try {
             String discontinueQuery = "UPDATE menu_items SET is_active = FALSE " +
                 "WHERE name = '" + name + "'" +
                 "AND item_size = '" + size.toString().toLowerCase() + "'";
             Statement discontinueStatement = this.createStatement();
             discontinueStatement.executeUpdate(discontinueQuery);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
+            throw e;
         }
     }
 
@@ -158,8 +158,8 @@ public class MenuItemManager extends DatabaseConnector {
      * @return a map of sale dates to menu item names and their revenue on that
      *         date; dates with no sales are absent
      */
-    public Map<LocalDate, Map<String, Double>> menuItemSalesReport(
-            LocalDateTime startDate, LocalDateTime endDate) {
+    public Map<LocalDate, Map<String, Double>> salesReport(
+            LocalDateTime startDate, LocalDateTime endDate) throws SQLException {
         LocalDate sqlStartDate = startDate.toLocalDate();
         LocalDate sqlEndDate = endDate.toLocalDate();
         LocalTime sqlStartTime = startDate.toLocalTime();
@@ -189,9 +189,9 @@ public class MenuItemManager extends DatabaseConnector {
                 result.get(saleDate)
                     .put(salesResultSet.getString("name"), salesResultSet.getDouble("total_sales"));
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
+            throw e;
         }
         return result;
     }

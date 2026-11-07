@@ -49,10 +49,10 @@ public class MenuItemController {
             double newPrice = Double.parseDouble(newPriceParam);
             menuItemManager.updatePrice(name, size, newPrice);
             ctx.status(200);
-        } catch (IllegalArgumentException e) {
-            ctx.status(400).result("Invalid size: " + e.getMessage());
         } catch (NumberFormatException e) {
             ctx.status(400).result("Invalid price format: " + newPriceParam);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).result("Invalid size: " + e.getMessage());
         } catch (SQLException e) {
             ctx.status(500).result("Database update failed: " + e.getMessage());
         }
@@ -75,7 +75,7 @@ public class MenuItemController {
     public static void salesReport(Context ctx) {
         try {
             DateRange dates = ctx.bodyAsClass(DateRange.class);
-            Map<LocalDate, Map<String, Double>> salesReport = menuItemManager.getSalesReport(dates.start(), dates.end());
+            Map<LocalDate, Map<String, Double>> salesReport = menuItemManager.salesReport(dates.start(), dates.end());
             ctx.status(200).json(salesReport);
         } catch (SQLException e) {
             ctx.status(500).result("Database query failed: " + e.getMessage());
