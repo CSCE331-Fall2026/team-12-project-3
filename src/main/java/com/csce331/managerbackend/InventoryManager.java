@@ -13,6 +13,12 @@ import com.csce331.common.DatabaseConnector;
 import com.csce331.common.DatabaseSetup;
 import com.csce331.common.ExceptionLogger;
 
+import com.csce331.models.Ingredient;
+import com.csce331.models.IngredientRestockData;
+import com.csce331.models.InventoryLocation;
+import com.csce331.models.Unit;
+import com.csce331.models.Utensil;
+
 /**
  * Reads and updates the restaurant's inventory: ingredients by storage
  * location, utensils, restock thresholds, expired stock, and sales totals.

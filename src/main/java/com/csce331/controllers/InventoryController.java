@@ -8,10 +8,10 @@ import java.util.List;
 import io.javalin.http.Context;
 
 import com.csce331.managerbackend.InventoryManager;
-import com.csce331.managerbackend.Ingredient;
-import com.csce331.managerbackend.Utensil;
-import com.csce331.managerbackend.InventoryLocation;
-import com.csce331.managerbackend.IngredientRestockData;
+import com.csce331.models.Ingredient;
+import com.csce331.models.Utensil;
+import com.csce331.models.InventoryLocation;
+import com.csce331.models.IngredientRestockData;
 
 /**
  * Handles the inventory HTTP endpoints: ingredients and utensils by storage

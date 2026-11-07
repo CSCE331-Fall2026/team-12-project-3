@@ -1,4 +1,4 @@
-package com.csce331.managerbackend;
+package com.csce331.models;
 
 /**
  * The unit used to measure an ingredient.
@@ -14,7 +14,7 @@ public enum Unit {
     ITEMS("");
 
     private final String unit;
-    
+
     private Unit(String unit) {
         this.unit = unit;
     }

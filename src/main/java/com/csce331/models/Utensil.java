@@ -1,4 +1,4 @@
-package com.csce331.managerbackend;
+package com.csce331.models;
 
 /**
  * A utensil tracked in the inventory, with a current quantity on hand and a

@@ -1,4 +1,4 @@
-package com.csce331.managerbackend;
+package com.csce331.models;
 
 /**
  * Where an ingredient is stored in the inventory.
@@ -11,7 +11,7 @@ public enum InventoryLocation {
     PANTRY("Pantry");
 
     private final String location;
-    
+
     private InventoryLocation(String location) {
         this.location = location;
     }

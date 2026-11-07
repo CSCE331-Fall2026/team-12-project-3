@@ -1,4 +1,4 @@
-package com.csce331.cashierbackend;
+package com.csce331.models;
 
 /**
  * The payment methods accepted at checkout.

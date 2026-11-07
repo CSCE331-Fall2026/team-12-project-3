@@ -17,6 +17,10 @@ import com.csce331.common.DatabaseConnector;
 import com.csce331.common.DatabaseSetup;
 import com.csce331.common.ExceptionLogger;
 
+import com.csce331.models.MenuItem;
+import com.csce331.models.MenuItemCategory;
+import com.csce331.models.MenuItemSize;
+
 /**
  * Reads and updates the restaurant's menu. Queries return only active items;
  * discontinuing an item keeps it in the database so past orders still refer to
@@ -33,44 +37,7 @@ public class MenuItemManager extends DatabaseConnector {
     public MenuItemManager() {
         super();
     }
-   
-    private MenuItemSize parseSize(String sizeString) {
-        switch (sizeString.toLowerCase()) {
-            case "small" -> {
-                return MenuItemSize.SMALL;
-            }
-            case "medium" -> {
-                return MenuItemSize.MEDIUM;
-            }
-            case "large" -> {
-                return MenuItemSize.LARGE;
-            }
-            default -> {
-                throw new IllegalArgumentException("Invalid menu item size: " + sizeString);
-            }
-        }
-    }
-    
-    private MenuItemCategory parseCategory(String categoryString) {
-        switch (categoryString.toLowerCase()) {
-            case "side" -> {
-                return MenuItemCategory.SIDE;
-            }
-            case "entree" -> {
-                return MenuItemCategory.ENTREE;
-            }
-            case "drink" -> {
-                return MenuItemCategory.DRINK;
-            }
-            case "appetizer" -> {
-                return MenuItemCategory.APPETIZER;
-            }
-            default -> {
-                throw new IllegalArgumentException("Invalid menu item category: " + categoryString);
-            }
-        }
-    }
-    
+
     /**
      * Returns every active menu item customers can order. Discontinued items are
      * left out.
@@ -87,8 +54,9 @@ public class MenuItemManager extends DatabaseConnector {
 
             while (resultSet.next()) {
                 String name = resultSet.getString("name");
-                MenuItemSize size = this.parseSize(resultSet.getString("item_size"));
-                MenuItemCategory category = this.parseCategory(resultSet.getString("item_category"));
+                MenuItemSize size = MenuItemSize.fromString(resultSet.getString("item_size"));
+                MenuItemCategory category =
+                    MenuItemCategory.fromString(resultSet.getString("item_category"));
                 double price = resultSet.getDouble("price");
 
                 MenuItem item = new MenuItem.Builder(name, category)
@@ -123,7 +91,7 @@ public class MenuItemManager extends DatabaseConnector {
 
             while (resultSet.next()) {
                 String name = resultSet.getString("name");
-                MenuItemSize size = this.parseSize(resultSet.getString("item_size"));
+                MenuItemSize size = MenuItemSize.fromString(resultSet.getString("item_size"));
                 double price = resultSet.getDouble("price");
 
                 MenuItem item = new MenuItem.Builder(name, category)

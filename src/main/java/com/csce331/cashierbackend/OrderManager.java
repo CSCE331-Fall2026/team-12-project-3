@@ -21,6 +21,11 @@ import java.util.Map;
 import com.csce331.common.DatabaseConnector;
 import com.csce331.common.ExceptionLogger;
 
+import com.csce331.models.MenuItem;
+import com.csce331.models.MenuItemCategory;
+import com.csce331.models.MenuItemSize;
+import com.csce331.models.PaymentMethod;
+
 /**
  * Handles cashier operations: browsing the menu and placing customer orders.
  *
@@ -41,8 +46,9 @@ public class OrderManager extends DatabaseConnector {
     private static MenuItem mapRowToMenuItem(ResultSet menuItemResultSet) throws SQLException {
         int id = menuItemResultSet.getInt("id");
         String name = menuItemResultSet.getString("name");
-        String category = menuItemResultSet.getString("item_category");
-        String size = menuItemResultSet.getString("item_size");
+        MenuItemCategory category =
+                MenuItemCategory.fromString(menuItemResultSet.getString("item_category"));
+        MenuItemSize size = MenuItemSize.fromString(menuItemResultSet.getString("item_size"));
         double price = menuItemResultSet.getDouble("price");
 
         byte[] imageBytes = menuItemResultSet.getBytes("image");
