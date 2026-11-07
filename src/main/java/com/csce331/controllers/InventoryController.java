@@ -85,7 +85,7 @@ public class InventoryController {
             }
 
             InventoryLocation location = parseLocation(inventoryType);
-            List<Ingredient> ingredients = inventoryManager.getIngredientsByLocation(location);
+            List<Ingredient> ingredients = inventoryManager.getIngredients(location);
             ctx.status(200).json(ingredients);
         } catch (IllegalArgumentException e) {
             ctx.status(400).result(e.getMessage());
@@ -172,7 +172,7 @@ public class InventoryController {
             if (deletionCount == 0) {
                 ctx.status(204);
             } else {
-                ctx.status(200).result(deletionCount);
+                ctx.status(200).result(Integer.toString(deletionCount));
             }
         } catch (SQLException e) {
             ctx.status(500).result("Error deleting expired ingredients: " + e.getMessage());
@@ -202,7 +202,7 @@ public class InventoryController {
             ctx.status(200).json(report);
         } catch (SQLException e) {
             ctx.status(500).result("Error finding restock report: " + e.getMessage());
-        } catch (IllegalArugumentException e) {
+        } catch (IllegalArgumentException e) {
             ctx.status(400).result(e.getMessage());
         }
     }

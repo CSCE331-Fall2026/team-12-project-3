@@ -4,17 +4,10 @@ import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
-
-import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.time.LocalTime;
 
 import com.csce331.common.DatabaseConnector;
 import com.csce331.common.DatabaseSetup;
@@ -207,7 +200,7 @@ public class InventoryManager extends DatabaseConnector {
 
             String restockQuery = "INSERT INTO inventory (ingredient_id, quantity, restock_date) "
                 + "SELECT id, " + quantity + ", CURRENT_DATE FROM ingredients "
-                + "WHERE name = '" + itemName + "' " +
+                + "WHERE name = '" + itemName + "' "
                 + "ON CONFLICT (ingredient_id, restock_date) "
                 + "DO UPDATE SET quantity = inventory.quantity + EXCLUDED.quantity;";
             restockStatement.executeUpdate(restockQuery);
@@ -294,7 +287,7 @@ public class InventoryManager extends DatabaseConnector {
         try {
             Statement deleteStatement = this.createStatement();
             String deleteQuery = "DELETE FROM inventory "
-                + "USING ingredients " +
+                + "USING ingredients "
                 + "WHERE inventory.ingredient_id = ingredients.id "
                 + "AND (inventory.restock_date + ingredients.shelf_life) < CURRENT_DATE;";
             deletionCount = deleteStatement.executeUpdate(deleteQuery);
@@ -370,11 +363,10 @@ public class InventoryManager extends DatabaseConnector {
                 + "WHERE quantity <= restock_threshold;";
 
             ResultSet restockResultSet = restockStatement.executeQuery(restockQuery);
-
             while (restockResultSet.next()) {
                 String name = restockResultSet.getString("name");
                 int quantity = restockResultSet.getInt("quantity");
-                int restockThreshold = restockResultset.getString("restock_threshold");
+                int restockThreshold = restockResultSet.getInt("restock_threshold");
 
                 Utensil utensil = new Utensil.Builder(name)
                         .quantity(quantity)
