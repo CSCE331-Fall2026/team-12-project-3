@@ -44,7 +44,7 @@ public class MenuItemManager extends DatabaseConnector {
      *
      * @return all active menu items
      */
-    public List<MenuItem> getAllMenuItems() {
+    public List<MenuItem> getMenuItems() throws SQLException {
         ArrayList<MenuItem> menuItemsList = new ArrayList<>();
 
         try {
@@ -65,9 +65,9 @@ public class MenuItemManager extends DatabaseConnector {
                     .build();
                 menuItemsList.add(item);
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
+            throw e;
         }
 
         return menuItemsList;
@@ -79,7 +79,7 @@ public class MenuItemManager extends DatabaseConnector {
      * @param category the category to filter by
      * @return the menu items in that category
      */
-    public List<MenuItem> getMenuItems(MenuItemCategory category) {
+    public List<MenuItem> getMenuItems(MenuItemCategory category) throws SQLException {
         ArrayList<MenuItem> menuItemsList = new ArrayList<>();
 
         try {
@@ -100,9 +100,9 @@ public class MenuItemManager extends DatabaseConnector {
                     .build();
                 menuItemsList.add(item);
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
+            throw e;
         }
 
         return menuItemsList;
@@ -115,12 +115,12 @@ public class MenuItemManager extends DatabaseConnector {
      * @param item the menu item to update
      * @param newPrice the new price
      */
-    public void updatePrice(MenuItem item, double newPrice) {
+    public void updatePrice(String name, MenuItemSize size, double newPrice) {
         try {
             String updateQuery = "UPDATE menu_items "
                 + "SET price = " + newPrice + " "
-                + "WHERE name = '" + item.getName() + "' "
-                + "AND item_size = '" + item.getSize().toString().toLowerCase() + "'";
+                + "WHERE name = '" + name + "' "
+                + "AND item_size = '" + size.toString().toLowerCase() + "'";
             Statement updateStatement = this.createStatement();
             updateStatement.executeUpdate(updateQuery);
         } catch (Exception e) {
@@ -136,11 +136,11 @@ public class MenuItemManager extends DatabaseConnector {
      *
      * @param item the menu item to discontinue
      */
-    public void discontinueMenuItem(MenuItem item) {
+    public void discontinueMenuItem(String name, MenuItemSize size) {
         try {
             String discontinueQuery = "UPDATE menu_items SET is_active = FALSE " +
-                "WHERE name = '" + item.getName() + "'" +
-                "AND item_size = '" + item.getSize().toString().toLowerCase() + "'";
+                "WHERE name = '" + name + "'" +
+                "AND item_size = '" + size.toString().toLowerCase() + "'";
             Statement discontinueStatement = this.createStatement();
             discontinueStatement.executeUpdate(discontinueQuery);
         } catch (Exception e) {

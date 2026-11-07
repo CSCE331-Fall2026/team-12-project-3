@@ -1,6 +1,5 @@
 package com.csce331.controllers;
 
-
 import java.sql.SQLException;
 
 import java.util.List;
@@ -23,7 +22,7 @@ import com.csce331.models.IngredientRestockData;
  * the error message rather than being thrown.
  */
 public class InventoryController {
-    private static InventoryManager inventoryManager = new InventoryManager();
+    private static final InventoryManager inventoryManager = new InventoryManager();
 
     /**
      * Converts a path segment from the request into the matching inventory
