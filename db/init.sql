@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS inventory (
 
 CREATE TABLE IF NOT EXISTS utensils (
     name TEXT NOT NULL,
-    current_amount INT NOT NULL CHECK (current_amount >= 0) DEFAULT 0,
+    quantity INT NOT NULL CHECK (current_amount >= 0) DEFAULT 0,
     restock_threshold INT NOT NULL CHECK (restock_threshold >= 0) DEFAULT 0,
     id SERIAL PRIMARY KEY
 );

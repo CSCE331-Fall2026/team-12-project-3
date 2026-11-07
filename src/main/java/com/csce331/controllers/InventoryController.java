@@ -60,12 +60,20 @@ public class InventoryController {
         }
     }
     
-    // TODO: Add utensil restocking
     public static void restock(Context ctx) {
         String name = ctx.pathParam("name");
         try {
-            int quantity = Integer.parseInt(ctx.queryParam("quantity"));
-            ctx.status(inventoryManager.restock(name, quantity) ? 201 : 200);
+            String quantityParam = ctx.queryParam("quantity");
+            int quantity = quantityParam != null ? Integer.parseInt(quantityParam) : 0;
+            String isUtensilParam = ctx.queryParam("isUtensil");
+            boolean isUtensil = isUtensilParam != null && isUtensilParam.equalsIgnoreCase("true");
+            
+            if (isUtensil) {
+                inventoryManager.restockUtensils(name, quantity);
+                ctx.status(200);
+                return;
+            }
+            ctx.status(inventoryManager.restockIngredients(name, quantity) ? 201 : 200);
         } catch (SQLException e) {
             ctx.status(500).result("Error restocking ingredients: " + e.getMessage());
         } catch (NumberFormatException e) {
@@ -75,9 +83,16 @@ public class InventoryController {
 
     public static void setRestockThreshold(Context ctx) {
         String name = ctx.pathParam("name");
+        String isUtensilParam = ctx.queryParam("isUtensil");
+        boolean isUtensil = isUtensilParam != null && isUtensilParam.equalsIgnoreCase("true");
         try {
+
             int threshold = Integer.parseInt(ctx.queryParam("threshold"));
-            inventoryManager.setRestockThreshold(name, threshold);
+            if (isUtensil) {
+                inventoryManager.setUtensilRestockThreshold(name, threshold);
+            } else {
+                inventoryManager.setIngredientRestockThreshold(name, threshold);
+            }
             ctx.status(200);
         } catch (SQLException e) {
             ctx.status(500).result("Error restocking ingredients: " + e.getMessage());

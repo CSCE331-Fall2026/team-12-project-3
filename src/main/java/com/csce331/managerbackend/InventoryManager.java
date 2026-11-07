@@ -157,7 +157,7 @@ public class InventoryManager extends DatabaseConnector {
 
                 Utensil utensil = new Utensil.Builder(name)
                     .restockThreshold(restockThreshold)
-                    .quantity(utensilResultSet.getInt("current_amount"))
+                    .quantity(utensilResultSet.getInt("quantity"))
                     .build();
                 allUtensils.add(utensil);
             }
@@ -179,7 +179,7 @@ public class InventoryManager extends DatabaseConnector {
      * @param quantity the amount to add
      * @return true if a new row was created, false otherwise
      */
-    public boolean restock(String itemName, int quantity) {
+    public boolean restockIngredients(String itemName, int quantity) {
         try {
             Statement restockStatement = this.createStatement();
 
@@ -204,6 +204,20 @@ public class InventoryManager extends DatabaseConnector {
         }
     }
 
+    public void restockUtensils(String itemName, int quantity) {
+        try {
+            Statement restockStatement = this.createStatement();
+
+            String restockQuery = "UPDATE utensils "
+                + "SET quantity = current_amount + " + quantity + " "
+                + "WHERE name = '" + itemName + "';";
+            restockStatement.executeUpdate(restockQuery);
+        } catch (SQLException e) {
+            ExceptionLogger.logException(e);
+            throw e;
+        }
+    }
+
     /**
      * Sets the quantity at or below which the named ingredient should be
      * restocked. If no ingredient has that name, nothing changes.
@@ -211,10 +225,23 @@ public class InventoryManager extends DatabaseConnector {
      * @param itemName the name of the ingredient to update
      * @param threshold the new restock threshold
      */
-    public void setRestockThreshold(String itemName, int threshold) {
+    public void setIngredientRestockThreshold(String itemName, int threshold) {
         try {
             Statement thresholdStatement = this.createStatement();
             String thresholdQuery = "UPDATE ingredients "
+                + "SET restock_threshold = " + threshold + " "
+                + "WHERE name = '" + itemName + "';";
+            thresholdStatement.executeUpdate(thresholdQuery);
+        } catch (SQLException e) {
+            ExceptionLogger.logException(e);
+            throw e;
+        }
+    }
+
+    public void setUtensilRestockThreshold(String itemName, int threshold) {
+        try {
+            Statement thresholdStatement = this.createStatement();
+            String thresholdQuery = "UPDATE utensils "
                 + "SET restock_threshold = " + threshold + " "
                 + "WHERE name = '" + itemName + "';";
             thresholdStatement.executeUpdate(thresholdQuery);
@@ -302,14 +329,14 @@ public class InventoryManager extends DatabaseConnector {
 
         try {
             Statement restockStatement = this.createStatement();
-            String restockQuery = "SELECT name, current_amount, restock_threshold from utensils "
-                + "WHERE current_amount <= restock_threshold;";
+            String restockQuery = "SELECT name, quantity, restock_threshold from utensils "
+                + "WHERE quantity <= restock_threshold;";
 
             ResultSet restockResultSet = restockStatement.executeQuery(restockQuery);
 
             while (restockResultSet.next()) {
                 String name = restockResultSet.getString("name");
-                int quantity = restockResultSet.getInt("current_amount");
+                int quantity = restockResultSet.getInt("quantity");
                 int restockThreshold = restockResultset.getString("restock_threshold");
 
                 Utensil utensil = new Utensil.Builder(name)
