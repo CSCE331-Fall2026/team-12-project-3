@@ -36,8 +36,14 @@
 
 **Output: ** The result of commit ID `9c069d1`.
 
-## Explicit Throwing in InventoryManager
+## 7. Explicit Throwing in InventoryManager
 
 **Prompt: ** For all methods in InventoryManager that throw e, designate that they throw SQLException and document it accordingly in the docstring.
 
 **Output: ** The result of commit ID `f41fc5d`.
+
+## 8. Model Class Refactor
+
+**Prompt: ** Refactor the managers such that the model classes (Ingredient, MenuItem, etc.) are stored in their own "models" package. Some models may be duplicated across cashierbackend and managerbackend, so merge them into one that contains all functionality both Manager classes need and remove any uneeded functionality. Fix any import and other errors that may arise as a result of this.
+
+**Output: ** The result of commit ID `e95bc56`.
