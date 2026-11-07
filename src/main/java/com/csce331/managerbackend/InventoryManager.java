@@ -83,8 +83,9 @@ public class InventoryManager extends DatabaseConnector {
      * Returns every ingredient in the inventory, across all locations.
      *
      * @return a list of all ingredients
+     * @throws SQLException if the database query fails
      */
-    public List<Ingredient> getIngredients() {
+    public List<Ingredient> getIngredients() throws SQLException {
         ArrayList<Ingredient> allIngredients = new ArrayList<>();
 
         try {
@@ -152,8 +153,9 @@ public class InventoryManager extends DatabaseConnector {
      * Returns every utensil tracked in the inventory.
      *
      * @return a list of all utensils
+     * @throws SQLException if the database query fails
      */
-    public List<Utensil> getUtensils() {
+    public List<Utensil> getUtensils() throws SQLException {
         ArrayList<Utensil> allUtensils = new ArrayList<>();
 
         try {
@@ -188,8 +190,9 @@ public class InventoryManager extends DatabaseConnector {
      * @param itemName the name of the ingredient to restock
      * @param quantity the amount to add
      * @return true if a new row was created, false otherwise
+     * @throws SQLException if the database update fails
      */
-    public boolean restockIngredients(String itemName, int quantity) {
+    public boolean restockIngredients(String itemName, int quantity) throws SQLException {
         try {
             Statement restockStatement = this.createStatement();
 
@@ -220,8 +223,9 @@ public class InventoryManager extends DatabaseConnector {
      *
      * @param itemName the name of the utensil to restock
      * @param quantity the amount to add
+     * @throws SQLException if the database update fails
      */
-    public void restockUtensils(String itemName, int quantity) {
+    public void restockUtensils(String itemName, int quantity) throws SQLException {
         try {
             Statement restockStatement = this.createStatement();
 
@@ -241,8 +245,9 @@ public class InventoryManager extends DatabaseConnector {
      *
      * @param itemName the name of the ingredient to update
      * @param threshold the new restock threshold
+     * @throws SQLException if the database update fails
      */
-    public void setIngredientRestockThreshold(String itemName, int threshold) {
+    public void setIngredientRestockThreshold(String itemName, int threshold) throws SQLException {
         try {
             Statement thresholdStatement = this.createStatement();
             String thresholdQuery = "UPDATE ingredients "
@@ -261,8 +266,9 @@ public class InventoryManager extends DatabaseConnector {
      *
      * @param itemName the name of the utensil to update
      * @param threshold the new restock threshold
+     * @throws SQLException if the database update fails
      */
-    public void setUtensilRestockThreshold(String itemName, int threshold) {
+    public void setUtensilRestockThreshold(String itemName, int threshold) throws SQLException {
         try {
             Statement thresholdStatement = this.createStatement();
             String thresholdQuery = "UPDATE utensils "
@@ -281,8 +287,9 @@ public class InventoryManager extends DatabaseConnector {
      * permanent.
      *
      * @return the number of inventory records removed
+     * @throws SQLException if the database delete fails
      */
-    public int endDay() {
+    public int endDay() throws SQLException {
         int deletionCount = 0;
         try {
             Statement deleteStatement = this.createStatement();
@@ -307,8 +314,10 @@ public class InventoryManager extends DatabaseConnector {
      * @param location the inventory location to report on
      * @return restock data for the ingredients in that location that need
      *         restocking
+     * @throws SQLException if the database query fails
      */
-    public List<IngredientRestockData> ingredientRestockReport(InventoryLocation location) {
+    public List<IngredientRestockData> ingredientRestockReport(InventoryLocation location)
+            throws SQLException {
         List <IngredientRestockData> restockReport = new ArrayList<>();
 
         try {
@@ -353,8 +362,9 @@ public class InventoryManager extends DatabaseConnector {
      * each utensil whose stock is at or below its restock threshold.
      *
      * @return restock data for the utensils that need restocking
+     * @throws SQLException if the database query fails
      */
-    public List<Utensil> utensilRestockReport() {
+    public List<Utensil> utensilRestockReport() throws SQLException {
         List<Utensil> restockReport = new ArrayList<>();
 
         try {
