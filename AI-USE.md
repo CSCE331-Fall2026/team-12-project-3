@@ -35,3 +35,9 @@
 **Prompt: ** Add docstrings to the undocumented functions in InventoryController and InventoryManager, and document InventoryController.
 
 **Output: ** The result of commit ID `9c069d1`.
+
+## Explicit Throwing in InventoryManager
+
+**Prompt: ** For all methods in InventoryManager that throw e, designate that they throw SQLException and document it accordingly in the docstring.
+
+**Output: ** The result of commit ID `f41fc5d`.
