@@ -6,6 +6,7 @@ package com.csce331.models;
  * @author Kedar Panchal
  */
 public enum InventoryLocation {
+    // TODO: Add utensils as a location
     FREEZER("Freezer"),
     REFRIGERATOR("Refrigerator"),
     PANTRY("Pantry");

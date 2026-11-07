@@ -1,9 +1,9 @@
-package com.csce331.models;
+package com.csce331.requests;
 
 import java.time.LocalDateTime;
 
-public record DateRange(LocalDateTime start, LocalDateTime end) {
-    public DateRange {
+public record DateRangeRequest(LocalDateTime start, LocalDateTime end) {
+    public DateRangeRequest {
         if (start.isAfter(end)) {
             throw new IllegalArgumentException("Start date must be before end date");
         }

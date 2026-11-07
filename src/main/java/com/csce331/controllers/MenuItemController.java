@@ -12,7 +12,10 @@ import io.javalin.http.Context;
 import com.csce331.models.MenuItem;
 import com.csce331.models.MenuItemCategory;
 import com.csce331.models.MenuItemSize;
-import com.csce331.models.DateRange;
+import com.csce331.requests.DateRangeRequest;
+import com.csce331.requests.CategoryRequest;
+import com.csce331.requests.PriceUpdateRequest;
+import com.csce331.requests.DiscontinueRequest;
 import com.csce331.managerbackend.MenuItemManager;
 
 public class MenuItemController {
@@ -28,10 +31,9 @@ public class MenuItemController {
     }
 
     public static void menuItemByCategory(Context ctx) {
-        String categoryParam = ctx.pathParam("category");
         try {
-            MenuItemCategory category = MenuItemCategory.fromString(categoryParam);
-            List<MenuItem> menuItems = menuItemManager.getMenuItems(category);
+            CategoryRequest request = ctx.bodyAsClass(CategoryRequest.class);
+            List<MenuItem> menuItems = menuItemManager.getMenuItems(request.category());
             ctx.status(200).json(menuItems);
         } catch (IllegalArgumentException e) {
             ctx.status(400).result("Invalid category: " + categoryParam);
@@ -41,13 +43,9 @@ public class MenuItemController {
     }
 
     public static void updatePrice(Context ctx) {
-        String name = ctx.pathParam("name");
-        String sizeParam = ctx.queryParam("size");
-        String newPriceParam = ctx.queryParam("newPrice");
         try {
-            MenuItemSize size = sizeParam == null ? MenuItemSize.MEDIUM : MenuItemSize.fromString(sizeParam);
-            double newPrice = Double.parseDouble(newPriceParam);
-            menuItemManager.updatePrice(name, size, newPrice);
+            PriceUpdateRequest request = ctx.bodyAsClass(PriceUpdateRequest.class);
+            menuItemManager.updatePrice(request.name(), request.size(), request.price());
             ctx.status(200);
         } catch (NumberFormatException e) {
             ctx.status(400).result("Invalid price format: " + newPriceParam);
@@ -59,11 +57,9 @@ public class MenuItemController {
     }
 
     public static void discontinueMenuItem(Context ctx) {
-        String name = ctx.pathParam("name");
-        String sizeParam = ctx.queryParam("size");
         try {
-            MenuItemSize size = sizeParam == null ? MenuItemSize.MEDIUM : MenuItemSize.fromString(sizeParam);
-            menuItemManager.discontinueMenuItem(name, size);
+            DiscontinueRequest request = ctx.bodyAsClass(DiscontinueRequest.class);
+            menuItemManager.discontinueMenuItem(request.name(), request.size());
             ctx.status(200);
         } catch (IllegalArgumentException e) {
             ctx.status(400).result("Invalid size: " + e.getMessage());
@@ -74,7 +70,7 @@ public class MenuItemController {
 
     public static void salesReport(Context ctx) {
         try {
-            DateRange dates = ctx.bodyAsClass(DateRange.class);
+            DateRangeRequest dates = ctx.bodyAsClass(DateRange.class);
             Map<LocalDate, Map<String, Double>> salesReport = menuItemManager.salesReport(dates.start(), dates.end());
             ctx.status(200).json(salesReport);
         } catch (SQLException e) {

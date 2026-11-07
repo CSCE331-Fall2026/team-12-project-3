@@ -11,6 +11,8 @@ import com.csce331.models.Ingredient;
 import com.csce331.models.Utensil;
 import com.csce331.models.InventoryLocation;
 import com.csce331.models.IngredientRestockData;
+import com.csce331.requests.LocationRequest;
+import com.csce331.requests.RestockRequest;
 
 /**
  * Handles the inventory HTTP endpoints: ingredients and utensils by storage
@@ -75,15 +77,16 @@ public class InventoryController {
      * @param ctx the request context
      */
     public static void ingredientsByLocation(Context ctx) {
-        String inventoryType = ctx.pathParam("location");
         try {
-            if (inventoryType.equals("utensils")) {
+            LocationRequest request = ctx.bodyAsClass(LocationRequest.class);
+
+            if (request.location().equals("utensils")) {
                 List<Utensil> utensils = inventoryManager.getUtensils();
                 ctx.status(200).json(utensils);
                 return;
             }
 
-            InventoryLocation location = parseLocation(inventoryType);
+            InventoryLocation location = parseLocation(request.location());
             List<Ingredient> ingredients = inventoryManager.getIngredients(location);
             ctx.status(200).json(ingredients);
         } catch (IllegalArgumentException e) {
@@ -107,19 +110,14 @@ public class InventoryController {
      * @param ctx the request context
      */
     public static void restock(Context ctx) {
-        String name = ctx.pathParam("name");
         try {
-            String quantityParam = ctx.queryParam("quantity");
-            int quantity = quantityParam != null ? Integer.parseInt(quantityParam) : 0;
-            String isUtensilParam = ctx.queryParam("isUtensil");
-            boolean isUtensil = isUtensilParam != null && isUtensilParam.equalsIgnoreCase("true");
-            
-            if (isUtensil) {
-                inventoryManager.restockUtensils(name, quantity);
+            RestockRequest request = ctx.bodyAsClass(RestockRequest.class);
+            if (request.isUtensil()) {
+                inventoryManager.restockUtensils(request.name(), request.quantity());
                 ctx.status(200);
                 return;
             }
-            ctx.status(inventoryManager.restockIngredients(name, quantity) ? 201 : 200);
+            ctx.status(inventoryManager.restockIngredients(request.name(), request.quantity()) ? 201 : 200);
         } catch (SQLException e) {
             ctx.status(500).result("Error restocking ingredients: " + e.getMessage());
         } catch (NumberFormatException e) {
@@ -138,16 +136,12 @@ public class InventoryController {
      * @param ctx the request context
      */
     public static void setRestockThreshold(Context ctx) {
-        String name = ctx.pathParam("name");
-        String isUtensilParam = ctx.queryParam("isUtensil");
-        boolean isUtensil = isUtensilParam != null && isUtensilParam.equalsIgnoreCase("true");
         try {
-
-            int threshold = Integer.parseInt(ctx.queryParam("threshold"));
-            if (isUtensil) {
-                inventoryManager.setUtensilRestockThreshold(name, threshold);
+            RestockRequest request = ctx.bodyAsClass(RestockRequest.class);
+            if (request.isUtensil()) {
+                inventoryManager.setUtensilRestockThreshold(request.name(), request.quantity());
             } else {
-                inventoryManager.setIngredientRestockThreshold(name, threshold);
+                inventoryManager.setIngredientRestockThreshold(request.name(), request.quantity());
             }
             ctx.status(200);
         } catch (SQLException e) {
@@ -189,14 +183,14 @@ public class InventoryController {
      * @param ctx the request context
      */
     public static void restockReport(Context ctx) {
-        String inventoryType = ctx.pathParam("location");
         try {
-            if (inventoryType.equals("utensils")) {
+            LocationRequest request = ctx.bodyAsClass(LocationRequest.class);
+            if (request.location().equals("utensils")) {
                 List<Utensil> report = inventoryManager.utensilRestockReport();
                 ctx.status(200).json(report);
                 return;
             }
-            InventoryLocation location = parseLocation(inventoryType);
+            InventoryLocation location = parseLocation(request.location());
             List<IngredientRestockData> report = inventoryManager.ingredientRestockReport(location);
             ctx.status(200).json(report);
         } catch (SQLException e) {
