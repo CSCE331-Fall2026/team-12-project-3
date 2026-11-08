@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AI Usage
 
 ## 1. Updating Javadocs for InventoryManager and Ingredient
