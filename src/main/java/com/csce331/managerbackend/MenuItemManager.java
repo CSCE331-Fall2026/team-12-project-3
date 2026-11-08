@@ -26,7 +26,7 @@ import com.csce331.models.MenuItemSize;
  * discontinuing an item keeps it in the database so past orders still refer to
  * it.
  *
- * <p>A failed query is logged and ends the program.
+ * <p>A failed query is logged and rethrown.
  *
  * @author Kedar Panchal
  */
@@ -43,6 +43,7 @@ public class MenuItemManager extends DatabaseConnector {
      * left out.
      *
      * @return all active menu items
+     * @throws SQLException if the query fails
      */
     public List<MenuItem> getMenuItems() throws SQLException {
         ArrayList<MenuItem> menuItemsList = new ArrayList<>();
@@ -78,6 +79,7 @@ public class MenuItemManager extends DatabaseConnector {
      *
      * @param category the category to filter by
      * @return the menu items in that category
+     * @throws SQLException if the query fails
      */
     public List<MenuItem> getMenuItems(MenuItemCategory category) throws SQLException {
         ArrayList<MenuItem> menuItemsList = new ArrayList<>();
@@ -112,8 +114,10 @@ public class MenuItemManager extends DatabaseConnector {
      * Updates the price of a menu item in the database. An item matches on name
      * and size, so both must match a stored item for the price to change.
      *
-     * @param item the menu item to update
+     * @param name the name of the menu item to update
+     * @param size the portion size of the menu item to update
      * @param newPrice the new price
+     * @throws SQLException if the update fails
      */
     public void updatePrice(String name, MenuItemSize size, double newPrice) throws SQLException {
         try {
@@ -134,7 +138,9 @@ public class MenuItemManager extends DatabaseConnector {
      * menu queries. The item is matched on name and size, and it stays in the
      * database so past orders are unaffected.
      *
-     * @param item the menu item to discontinue
+     * @param name the name of the menu item to discontinue
+     * @param size the portion size of the menu item to discontinue
+     * @throws SQLException if the update fails
      */
     public void discontinueMenuItem(String name, MenuItemSize size) throws SQLException {
         try {
@@ -157,6 +163,7 @@ public class MenuItemManager extends DatabaseConnector {
      * @param endDate the last date and time in the range
      * @return a map of sale dates to menu item names and their revenue on that
      *         date; dates with no sales are absent
+     * @throws SQLException if the query fails
      */
     public Map<LocalDate, Map<String, Double>> salesReport(
             LocalDateTime startDate, LocalDateTime endDate) throws SQLException {

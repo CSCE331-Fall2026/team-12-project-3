@@ -18,9 +18,24 @@ import com.csce331.requests.PriceUpdateRequest;
 import com.csce331.requests.DiscontinueRequest;
 import com.csce331.managerbackend.MenuItemManager;
 
+/**
+ * HTTP handlers for browsing the menu, updating prices, and discontinuing
+ * items.
+ */
 public class MenuItemController {
     private static final MenuItemManager menuItemManager = new MenuItemManager();
 
+    /**
+     * Prevents instantiation; the handlers are all static.
+     */
+    private MenuItemController() {
+    }
+
+    /**
+     * Responds with every active menu item.
+     *
+     * @param ctx the Javalin request context
+     */
     public static void allMenuItems(Context ctx) {
         try {
             List<MenuItem> menuItems = menuItemManager.getMenuItems();
@@ -30,6 +45,11 @@ public class MenuItemController {
         }
     }
 
+    /**
+     * Responds with the active menu items in the requested category.
+     *
+     * @param ctx the Javalin request context
+     */
     public static void menuItemByCategory(Context ctx) {
         try {
             CategoryRequest request = ctx.bodyAsClass(CategoryRequest.class);
@@ -42,6 +62,11 @@ public class MenuItemController {
         }
     }
 
+    /**
+     * Updates the price of the menu item named in the request body.
+     *
+     * @param ctx the Javalin request context
+     */
     public static void updatePrice(Context ctx) {
         try {
             PriceUpdateRequest request = ctx.bodyAsClass(PriceUpdateRequest.class);
@@ -56,6 +81,11 @@ public class MenuItemController {
         }
     }
 
+    /**
+     * Marks the menu item named in the request body as discontinued.
+     *
+     * @param ctx the Javalin request context
+     */
     public static void discontinueMenuItem(Context ctx) {
         try {
             DiscontinueRequest request = ctx.bodyAsClass(DiscontinueRequest.class);
@@ -68,6 +98,12 @@ public class MenuItemController {
         }
     }
 
+    /**
+     * Responds with the revenue each menu item earned, grouped by sale date,
+     * for the date range in the request body.
+     *
+     * @param ctx the Javalin request context
+     */
     public static void salesReport(Context ctx) {
         try {
             DateRangeRequest dates = ctx.bodyAsClass(DateRangeRequest.class);

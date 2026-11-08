@@ -6,8 +6,11 @@ package com.csce331.models;
  * @author Kedar Panchal
  */
 public enum MenuItemSize {
+    /** Small portion, shown as {@code "small"}. */
     SMALL("small"),
+    /** Medium portion, shown as {@code "medium"}. */
     MEDIUM("medium"),
+    /** Large portion, shown as {@code "large"}. */
     LARGE("large");
 
     private final String displayName;

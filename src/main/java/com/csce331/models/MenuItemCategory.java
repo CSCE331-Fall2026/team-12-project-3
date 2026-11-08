@@ -6,9 +6,13 @@ package com.csce331.models;
  * @author Kedar Panchal
  */
 public enum MenuItemCategory {
+    /** A side dish, shown as {@code "side"}. */
     SIDE("side"),
+    /** A main dish, shown as {@code "entree"}. */
     ENTREE("entree"),
+    /** A beverage, shown as {@code "drink"}. */
     DRINK("drink"),
+    /** An appetizer, shown as {@code "appetizer"}. */
     APPETIZER("appetizer");
 
     private final String displayName;

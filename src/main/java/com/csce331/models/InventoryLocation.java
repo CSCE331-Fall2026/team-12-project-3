@@ -7,9 +7,13 @@ package com.csce331.models;
  */
 public enum InventoryLocation {
     // TODO: Add utensils as a location
+    /** The freezer. */
     FREEZER("Freezer"),
+    /** The refrigerator. */
     REFRIGERATOR("Refrigerator"),
+    /** Dry storage in the pantry. */
     PANTRY("Pantry"),
+    /** Storage for utensils. */
     UTENSILS("Utensils");
 
     private final String location;

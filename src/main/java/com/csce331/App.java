@@ -10,6 +10,13 @@ import com.csce331.controllers.MenuItemController;
  */
 public class App {
     /**
+     * Prevents instantiation; the application is started through
+     * {@link #main(String[])}.
+     */
+    private App() {
+    }
+
+    /**
      * Starts the application.
      *
      * @param args the command-line arguments

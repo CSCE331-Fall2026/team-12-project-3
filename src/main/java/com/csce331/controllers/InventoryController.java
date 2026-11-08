@@ -27,6 +27,12 @@ public class InventoryController {
     private static final InventoryManager inventoryManager = new InventoryManager();
 
     /**
+     * Prevents instantiation; the handlers are all static.
+     */
+    private InventoryController() {
+    }
+
+    /**
      * Responds with every ingredient in the inventory as JSON.
      *
      * <p>Responds 500 with an error message if the database query fails.
