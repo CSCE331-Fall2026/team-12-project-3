@@ -8,7 +8,7 @@
 target
 
 # Environment variables
-src/main/java/com/csce331/common/DatabaseSetup.java
+backend/src/main/java/com/csce331/common/DatabaseSetup.java
 .env*
 
 # Generated scripts
