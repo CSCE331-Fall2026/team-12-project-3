@@ -9,7 +9,11 @@ target
 
 # Environment variables
 src/main/java/com/csce331/common/DatabaseSetup.java
+.env*
 
 # Generated scripts
 db/orders.sql
 db/inventory.sql
+
+# Frontend artifacts
+.vercel

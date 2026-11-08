@@ -65,3 +65,7 @@
 **Prompt: ** Document all undocumented classes and methods. Ensure the documentation styles match that of InventoryManager.
  
 **Output: ** The result of commit ID `d7f5daa`. 
+
+## 12. Meeting Minutes
+**Prompt: ** Format the meeting minutes to look nice in markdown.
+**Output: ** `sprint-materials/sprint1-meetings.md`
