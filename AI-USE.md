@@ -53,3 +53,9 @@
 **Prompt: ** Add docstrings to undocumented classes, records, methods, and enum elements such that mvn javadoc:javadoc yields no errors.
 
 **Output: ** The result of commit ID `028c762`.
+
+## 10. Order Manager Standardization
+
+**Prompt: **  Completely refactor OrderManager to match the style of MenuItemManager and InventoryManager. Categorized strings should be made enums instead (like menu item categories), and ensure the SQL queries match the intent of the functions (e.g., getting the most popular items should rank items by popularity). Check against init.sql for the database schema. Caught SQLExceptions should be logged with ExceptionLogger and rethrown. Extract PlacedOrder into its own class in models called Order instead of making it a nested class.
+
+**Output: ** The result of commit ID `4fd4d0e`.
