@@ -4,6 +4,7 @@ import io.javalin.Javalin;
 
 import com.csce331.controllers.InventoryController;
 import com.csce331.controllers.MenuItemController;
+import com.csce331.controllers.CustomerMenuController;
 
 /**
  * Application entry point.
@@ -36,6 +37,10 @@ public class App {
             config.routes.patch("/manager/menuitems", MenuItemController::updatePrice);
             config.routes.patch("/manager/menuitems", MenuItemController::discontinueMenuItem);
             config.routes.get("/manager/salesreport", MenuItemController::salesReport);
+
+            config.routes.get("/customer/menuitems", CustomerMenuController::popularItems);
+            config.routes.query("/customer/menuitems", CustomerMenuController::menuItemByCategory);
+            config.routes.post("/customer/order", CustomerMenuController::order);
         }).start(8080);
     }
 }
