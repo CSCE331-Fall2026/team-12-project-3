@@ -129,6 +129,7 @@ public class OrderManager extends DatabaseConnector {
 
         return categoryItems;
     }
+
     /**
      * Places an order at the current date and time and saves it in a single
      * transaction. The items and quantities are stored with the order, and the
