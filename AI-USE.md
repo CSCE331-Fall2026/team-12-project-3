@@ -47,3 +47,9 @@
 **Prompt: ** Refactor the managers such that the model classes (Ingredient, MenuItem, etc.) are stored in their own "models" package. Some models may be duplicated across cashierbackend and managerbackend, so merge them into one that contains all functionality both Manager classes need and remove any uneeded functionality. Fix any import and other errors that may arise as a result of this.
 
 **Output: ** The result of commit ID `e95bc56`.
+
+## 9. Documentation of Request Models
+
+**Prompt: ** Add docstrings to undocumented classes, records, methods, and enum elements such that mvn javadoc:javadoc yields no errors.
+
+**Output: ** The result of commit ID `028c762`.
