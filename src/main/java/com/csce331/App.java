@@ -24,6 +24,7 @@ public class App {
     public static void main(String[] args) {
         Javalin app = Javalin.create(config -> {
             config.routes.get("/", ctx -> ctx.result("Up and running!"));
+
             config.routes.get("/manager/ingredients", InventoryController::allIngredients);
             config.routes.query("/manager/ingredients", InventoryController::ingredientsByLocation);
             config.routes.put("/manager/restock/", InventoryController::restock);

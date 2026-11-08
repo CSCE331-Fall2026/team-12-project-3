@@ -66,7 +66,7 @@ public class OrderManager extends DatabaseConnector {
      *
      * @return up to 10 active menu items, each mapped to {@code true}
      */
-    public Map<MenuItem, Boolean> getPopularItems() {
+    public Map<MenuItem, Boolean> getPopularItems() throws SQLException {
         Map<MenuItem, Boolean> popularItems = new HashMap<>();
 
         String query =
@@ -80,6 +80,7 @@ public class OrderManager extends DatabaseConnector {
             }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
+            throw e;
         }
 
         return popularItems;
