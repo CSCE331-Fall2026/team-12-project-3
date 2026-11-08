@@ -18,6 +18,11 @@ public enum InventoryLocation {
 
     private final String location;
 
+    /**
+     * Creates a location with the given display name.
+     *
+     * @param location the name used in displays
+     */
     private InventoryLocation(String location) {
         this.location = location;
     }

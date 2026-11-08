@@ -15,6 +15,11 @@ public enum Unit {
 
     private final String unit;
 
+    /**
+     * Creates a unit with the given abbreviation.
+     *
+     * @param unit the abbreviation shown for the unit
+     */
     private Unit(String unit) {
         this.unit = unit;
     }

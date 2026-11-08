@@ -15,6 +15,11 @@ public enum MenuItemSize {
 
     private final String displayName;
 
+    /**
+     * Creates a size with the given display name.
+     *
+     * @param displayName the name used in the database and in displays
+     */
     private MenuItemSize(String displayName) {
         this.displayName = displayName;
     }

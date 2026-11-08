@@ -12,6 +12,11 @@ public class Utensil {
     private int quantity;
     private int restockThreshold;
 
+    /**
+     * Creates a utensil from the builder's configuration.
+     *
+     * @param builder the builder holding the utensil's details
+     */
     private Utensil(Builder builder) {
         this.name = builder.name;
         this.quantity = builder.quantity;

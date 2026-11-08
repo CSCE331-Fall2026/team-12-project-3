@@ -17,6 +17,11 @@ public enum MenuItemCategory {
 
     private final String displayName;
 
+    /**
+     * Creates a category with the given display name.
+     *
+     * @param displayName the name used in the database and in displays
+     */
     private MenuItemCategory(String displayName) {
         this.displayName = displayName;
     }

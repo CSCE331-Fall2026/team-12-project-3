@@ -8,6 +8,9 @@ package com.csce331.common;
  * real file is excluded from version control.
  */
 public final class DatabaseSetupExample  {
+    /**
+     * Prevents instantiation; only the credential constants are used.
+     */
     private DatabaseSetupExample() {
     }
 

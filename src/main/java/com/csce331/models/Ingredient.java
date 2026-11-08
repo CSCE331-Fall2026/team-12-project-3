@@ -22,6 +22,11 @@ public class Ingredient {
     private final int lifespan;
     private int restockThreshold;
 
+    /**
+     * Creates an ingredient from the builder's configuration.
+     *
+     * @param builder the builder holding the ingredient's details
+     */
     private Ingredient(Builder builder) {
         this.name = builder.name;
         this.unit = builder.unit;

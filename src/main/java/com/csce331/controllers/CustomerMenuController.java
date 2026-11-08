@@ -32,6 +32,12 @@ public class CustomerMenuController {
         }
     }
 
+    /**
+     * Responds with the active menu items in the requested category. Responds
+     * 400 for an invalid category and 500 if the database query fails.
+     *
+     * @param ctx the Javalin request context
+     */
     public static void menuItemByCategory(Context ctx) {
         try {
             CategoryRequest request = ctx.bodyAsClass(CategoryRequest.class);
@@ -44,6 +50,12 @@ public class CustomerMenuController {
         }
     }
 
+    /**
+     * Places the order in the request body. Responds 201 on success, 400 for
+     * an invalid order, and 500 if the database query fails.
+     *
+     * @param ctx the Javalin request context
+     */
     public static void order(Context ctx) {
         try {
             OrderRequest request = ctx.bodyAsClass(OrderRequest.class);
