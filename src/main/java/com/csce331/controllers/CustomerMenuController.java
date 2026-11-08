@@ -47,7 +47,7 @@ public class CustomerMenuController {
     public static void order(Context ctx) {
         try {
             OrderRequest request = ctx.bodyAsClass(OrderRequest.class);
-            orderManager.placeOrder(request.items(), request.method(), request.price());
+            orderManager.order(request.items(), request.method(), request.price());
             ctx.status(201);
         } catch (IllegalArgumentException e) {
             ctx.status(400).result("Invalid order: " + e.getMessage());
