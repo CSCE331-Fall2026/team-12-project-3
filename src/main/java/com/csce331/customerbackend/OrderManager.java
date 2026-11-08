@@ -6,13 +6,11 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,6 +22,7 @@ import com.csce331.common.ExceptionLogger;
 import com.csce331.models.MenuItem;
 import com.csce331.models.MenuItemCategory;
 import com.csce331.models.MenuItemSize;
+import com.csce331.models.Order;
 import com.csce331.models.PaymentMethod;
 
 /**
@@ -31,8 +30,9 @@ import com.csce331.models.PaymentMethod;
  *
  * <p>The manager keeps no order state of its own. Each method reads from or
  * writes to the database and returns the result, so the current order lives
- * with the caller and is passed in at checkout. Database errors are logged;
- * query methods return an empty result instead of throwing.
+ * with the caller and is passed in at checkout.
+ *
+ * <p>A failed query is logged and rethrown.
  */
 public class OrderManager extends DatabaseConnector {
 
@@ -43,6 +43,14 @@ public class OrderManager extends DatabaseConnector {
         super();
     }
 
+    /**
+     * Converts a result set row containing the menu item columns into a menu
+     * item.
+     *
+     * @param menuItemResultSet the result set positioned on the row to read
+     * @return the menu item in that row
+     * @throws SQLException if a column cannot be read
+     */
     private static MenuItem mapRowToMenuItem(ResultSet menuItemResultSet) throws SQLException {
         int id = menuItemResultSet.getInt("id");
         String name = menuItemResultSet.getString("name");
@@ -60,23 +68,29 @@ public class OrderManager extends DatabaseConnector {
     }
 
     /**
-     * Returns up to 10 active menu items. The query does not rank by sales, so
-     * treat the result as a sample of the menu. Every entry is marked available,
-     * since inactive items are filtered out.
+     * Returns the most popular active menu items, most ordered first. An item's
+     * popularity is the total quantity ordered across all placed orders, and
+     * only items that have been ordered are included.
      *
-     * @return up to 10 active menu items, each mapped to {@code true}
+     * @return up to 10 active menu items, ordered by total quantity ordered
+     * @throws SQLException if the query fails
      */
-    public Map<MenuItem, Boolean> getPopularItems() throws SQLException {
-        Map<MenuItem, Boolean> popularItems = new HashMap<>();
+    public List<MenuItem> getPopularItems() throws SQLException {
+        List<MenuItem> popularItems = new ArrayList<>();
 
         String query =
-                "SELECT id, name, item_category, item_size, price, image FROM menu_items "
-                + "WHERE is_active = TRUE LIMIT 10";
+                "SELECT m.id, m.name, m.item_category, m.item_size, m.price, m.image "
+                + "FROM menu_items m "
+                + "JOIN order_menu om ON om.menu_item_id = m.id "
+                + "WHERE m.is_active = TRUE "
+                + "GROUP BY m.id, m.name, m.item_category, m.item_size, m.price, m.image "
+                + "ORDER BY SUM(om.quantity) DESC, m.name, m.item_size "
+                + "LIMIT 10";
 
-        try (Statement itemStatement = this.createStatement();
-                ResultSet itemResultSet = itemStatement.executeQuery(query)) {
+        try (PreparedStatement itemStatement = this.getConnection().prepareStatement(query);
+                ResultSet itemResultSet = itemStatement.executeQuery()) {
             while (itemResultSet.next()) {
-                popularItems.put(mapRowToMenuItem(itemResultSet), true);
+                popularItems.add(mapRowToMenuItem(itemResultSet));
             }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
@@ -89,133 +103,41 @@ public class OrderManager extends DatabaseConnector {
     /**
      * Returns the active menu items in one category.
      *
-     * @param category the category name, one of {@code "entree"}, {@code "side"},
-     *                 {@code "drink"}, or {@code "appetizer"} (case-insensitive)
-     * @return the matching items, each mapped to {@code true}
+     * @param category the category to filter by
+     * @return the matching active items
+     * @throws SQLException if the query fails
      */
-    public Map<MenuItem, Boolean> getCategoryItems(String category) {
-        Map<MenuItem, Boolean> categoryItems = new HashMap<>();
+    public List<MenuItem> getCategoryItems(MenuItemCategory category) throws SQLException {
+        List<MenuItem> categoryItems = new ArrayList<>();
 
         String query =
                 "SELECT id, name, item_category, item_size, price, image FROM menu_items "
                 + "WHERE item_category = ?::menu_category AND is_active = TRUE";
 
         try (PreparedStatement itemStatement = this.getConnection().prepareStatement(query)) {
-            itemStatement.setString(1, category.toLowerCase());
+            itemStatement.setString(1, category.toString());
 
             try (ResultSet itemResultSet = itemStatement.executeQuery()) {
                 while (itemResultSet.next()) {
-                    categoryItems.put(mapRowToMenuItem(itemResultSet), true);
+                    categoryItems.add(mapRowToMenuItem(itemResultSet));
                 }
             }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
+            throw e;
         }
 
         return categoryItems;
     }
 
     /**
-     * An order read from the database. Its items, date, time, and total are
-     * fixed once it is loaded.
-     *
-     * <p>Example usage:
-     * <pre>{@code
-     * OrderManager om = new OrderManager();
-     * for (OrderManager.PlacedOrder o : om.getOrders(LocalDate.of(2026, 10, 16), 14)) {
-     *     System.out.println(o.getName() + " " + o.getDate() + " " + o.getTime());
-     *     for (MenuItem m : o.getItems()) {
-     *         System.out.println("  " + m.getName() + " $" + m.getPrice());
-     *     }
-     * }
-     * }</pre>
-     */
-    public static class PlacedOrder {
-        private final int id;
-        private final LocalDate date;
-        private final LocalTime time;
-        private final double total;
-        private final Map<MenuItem, Integer> itemQuantities = new LinkedHashMap<>();
-
-        /**
-         * Creates a placed order with the given identity and totals.
-         *
-         * @param id the database identifier of the order
-         * @param date the date the order was placed
-         * @param time the time the order was placed
-         * @param total the total price of the order
-         */
-        public PlacedOrder(int id, LocalDate date, LocalTime time, double total) {
-            this.id = id;
-            this.date = date;
-            this.time = time;
-            this.total = total;
-        }
-
-        private void addItem(MenuItem item, int quantity) {
-            itemQuantities.merge(item, quantity, Integer::sum);
-        }
-
-        /**
-         * Returns the database identifier of the order.
-         *
-         * @return the order identifier
-         */
-        public int getId() { return id; }
-
-        /**
-         * Returns a display name of the form {@code Order #12}.
-         *
-         * @return the order name
-         */
-        public String getName() { return "Order #" + id; }
-
-        /**
-         * Returns the date the order was placed.
-         *
-         * @return the order date
-         */
-        public LocalDate getDate() { return date; }
-
-        /**
-         * Returns the time the order was placed.
-         *
-         * @return the order time
-         */
-        public LocalTime getTime() { return time; }
-
-        /**
-         * Returns the total price of the order.
-         *
-         * @return the order total
-         */
-        public double getTotal() { return total; }
-
-        /**
-         * Returns the menu items in this order. Each item carries its own price.
-         *
-         * @return the items in this order
-         */
-        public List<MenuItem> getItems() { return new ArrayList<>(itemQuantities.keySet()); }
-
-        /**
-         * Returns the items in this order and their quantities.
-         *
-         * @return an unmodifiable view of the order's item quantities
-         */
-        public Map<MenuItem, Integer> getItemQuantities() {
-            return Collections.unmodifiableMap(itemQuantities);
-        }
-    }
-
-    /**
      * Returns every order placed on the given day, oldest first.
      *
      * @param day the date to look up
-     * @return the day's orders, or an empty list if there are none or the query
-     *         fails
+     * @return the day's orders, or an empty list if there are none
+     * @throws SQLException if the query fails
      */
-    public List<PlacedOrder> getOrders(LocalDate day) {
+    public List<Order> getOrders(LocalDate day) throws SQLException {
         return this.queryOrders(day, null);
     }
 
@@ -225,18 +147,27 @@ public class OrderManager extends DatabaseConnector {
      * @param day the date to look up
      * @param hour the hour on a 24-hour clock, from 0 to 23 (14 means 2:00 to
      *             2:59 PM)
-     * @return the matching orders, or an empty list if there are none or the
-     *         query fails
+     * @return the matching orders, or an empty list if there are none
+     * @throws SQLException if the query fails
      * @throws IllegalArgumentException if {@code hour} is not between 0 and 23
      */
-    public List<PlacedOrder> getOrders(LocalDate day, int hour) {
+    public List<Order> getOrders(LocalDate day, int hour) throws SQLException {
         if (hour < 0 || hour > 23) {
             throw new IllegalArgumentException("hour must be between 0 and 23");
         }
         return this.queryOrders(day, hour);
     }
 
-    private List<PlacedOrder> queryOrders(LocalDate day, Integer hour) {
+    /**
+     * Loads the orders placed on the given day, optionally restricted to one
+     * hour, along with their items.
+     *
+     * @param day the date to look up
+     * @param hour the hour to restrict to, or {@code null} for the whole day
+     * @return the matching orders, oldest first
+     * @throws SQLException if the query fails
+     */
+    private List<Order> queryOrders(LocalDate day, Integer hour) throws SQLException {
         String query =
                 "SELECT o.id AS order_id, o.order_date, o.order_time, o.price AS order_price, "
                 + "       m.id, m.name, m.item_category, m.item_size, m.price, m.image, "
@@ -248,7 +179,7 @@ public class OrderManager extends DatabaseConnector {
                 + (hour != null ? "AND EXTRACT(HOUR FROM o.order_time) = ? " : "")
                 + "ORDER BY o.order_time, o.id";
 
-        Map<Integer, PlacedOrder> orders = new LinkedHashMap<>();
+        Map<Integer, Order> orders = new LinkedHashMap<>();
 
         try (PreparedStatement orderStatement = this.getConnection().prepareStatement(query)) {
             orderStatement.setDate(1, Date.valueOf(day));
@@ -259,9 +190,9 @@ public class OrderManager extends DatabaseConnector {
             try (ResultSet orderResultSet = orderStatement.executeQuery()) {
                 while (orderResultSet.next()) {
                     int orderId = orderResultSet.getInt("order_id");
-                    PlacedOrder order = orders.get(orderId);
+                    Order order = orders.get(orderId);
                     if (order == null) {
-                        order = new PlacedOrder(
+                        order = new Order(
                                 orderId,
                                 orderResultSet.getDate("order_date").toLocalDate(),
                                 orderResultSet.getTime("order_time").toLocalTime(),
@@ -273,6 +204,7 @@ public class OrderManager extends DatabaseConnector {
             }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
+            throw e;
         }
 
         return new ArrayList<>(orders.values());
@@ -291,10 +223,12 @@ public class OrderManager extends DatabaseConnector {
      * @param items      the ordered menu items and their quantities
      * @param method     the payment method used at checkout
      * @param totalPrice the total to store for the order
-     * @return the new order's database identifier, or -1 if the order is empty or
-     *         the transaction fails and rolls back
+     * @return the new order's database identifier, or -1 if the order is empty
+     * @throws SQLException if the order cannot be saved; the transaction is
+     *         rolled back first
      */
-    public int order(Map<MenuItem, Integer> items, PaymentMethod method, double totalPrice) {
+    public int order(Map<MenuItem, Integer> items, PaymentMethod method, double totalPrice)
+            throws SQLException {
         if (items == null || items.isEmpty()) {
             return -1; // Don't process empty orders
         }
@@ -352,7 +286,7 @@ public class OrderManager extends DatabaseConnector {
                 ExceptionLogger.logException(rollbackException);
             }
             ExceptionLogger.logException(e);
-            return -1;
+            throw e;
         } finally {
             try {
                 conn.setAutoCommit(true);
@@ -362,6 +296,16 @@ public class OrderManager extends DatabaseConnector {
         }
     }
 
+    /**
+     * Removes the ingredients used by an order from inventory, taking each
+     * ingredient from the stock that expires soonest and never using expired
+     * stock. If inventory runs short, the missing amount is not recorded.
+     *
+     * @param conn the connection holding the order's transaction
+     * @param orderId the order whose ingredients should be removed
+     * @return the number of inventory batches updated
+     * @throws SQLException if the inventory cannot be read or updated
+     */
     private int removeInventoryForOrder(Connection conn, int orderId) throws SQLException {
         String usageQuery =
                 "SELECT mi.ingredient_id, SUM(mi.quantity * om.quantity) AS used "
