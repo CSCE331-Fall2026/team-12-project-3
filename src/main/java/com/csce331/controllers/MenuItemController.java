@@ -36,7 +36,7 @@ public class MenuItemController {
             List<MenuItem> menuItems = menuItemManager.getMenuItems(request.category());
             ctx.status(200).json(menuItems);
         } catch (IllegalArgumentException e) {
-            ctx.status(400).result("Invalid category: " + categoryParam);
+            ctx.status(400).result("Invalid category: " + e.getMessage());
         } catch (SQLException e) {
             ctx.status(500).result("Database query failed: " + e.getMessage());
         }
@@ -48,7 +48,7 @@ public class MenuItemController {
             menuItemManager.updatePrice(request.name(), request.size(), request.price());
             ctx.status(200);
         } catch (NumberFormatException e) {
-            ctx.status(400).result("Invalid price format: " + newPriceParam);
+            ctx.status(400).result("Invalid price format: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             ctx.status(400).result("Invalid size: " + e.getMessage());
         } catch (SQLException e) {
@@ -70,7 +70,7 @@ public class MenuItemController {
 
     public static void salesReport(Context ctx) {
         try {
-            DateRangeRequest dates = ctx.bodyAsClass(DateRange.class);
+            DateRangeRequest dates = ctx.bodyAsClass(DateRangeRequest.class);
             Map<LocalDate, Map<String, Double>> salesReport = menuItemManager.salesReport(dates.start(), dates.end());
             ctx.status(200).json(salesReport);
         } catch (SQLException e) {

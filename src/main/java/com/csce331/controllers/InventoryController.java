@@ -27,31 +27,6 @@ public class InventoryController {
     private static final InventoryManager inventoryManager = new InventoryManager();
 
     /**
-     * Converts a path segment from the request into the matching inventory
-     * location.
-     *
-     * @param inventoryType the location name from the request, case-insensitive
-     * @return the matching inventory location
-     * @throws IllegalArgumentException if the name is not freezer,
-     *         refrigerator, or pantry
-     */
-    private static InventoryLocation parseLocation(String inventoryType) {
-        switch (inventoryType.toLowerCase()) {
-            case "freezer" -> {
-                return InventoryLocation.FREEZER;
-            }
-            case "refrigerator" -> {
-                return InventoryLocation.REFRIGERATOR;
-            }
-            case "pantry" -> {
-                return InventoryLocation.PANTRY;
-            }
-            default -> throw new IllegalArgumentException(
-                    "Invalid inventory type: " + inventoryType);
-        }
-    }
-
-    /**
      * Responds with every ingredient in the inventory as JSON.
      *
      * <p>Responds 500 with an error message if the database query fails.
@@ -80,14 +55,13 @@ public class InventoryController {
         try {
             LocationRequest request = ctx.bodyAsClass(LocationRequest.class);
 
-            if (request.location().equals("utensils")) {
+            if (request.location() == InventoryLocation.UTENSILS) {
                 List<Utensil> utensils = inventoryManager.getUtensils();
                 ctx.status(200).json(utensils);
                 return;
             }
 
-            InventoryLocation location = parseLocation(request.location());
-            List<Ingredient> ingredients = inventoryManager.getIngredients(location);
+            List<Ingredient> ingredients = inventoryManager.getIngredients(request.location());
             ctx.status(200).json(ingredients);
         } catch (IllegalArgumentException e) {
             ctx.status(400).result(e.getMessage());
@@ -185,13 +159,12 @@ public class InventoryController {
     public static void restockReport(Context ctx) {
         try {
             LocationRequest request = ctx.bodyAsClass(LocationRequest.class);
-            if (request.location().equals("utensils")) {
+            if (request.location() == InventoryLocation.UTENSILS) {
                 List<Utensil> report = inventoryManager.utensilRestockReport();
                 ctx.status(200).json(report);
                 return;
             }
-            InventoryLocation location = parseLocation(request.location());
-            List<IngredientRestockData> report = inventoryManager.ingredientRestockReport(location);
+            List<IngredientRestockData> report = inventoryManager.ingredientRestockReport(request.location());
             ctx.status(200).json(report);
         } catch (SQLException e) {
             ctx.status(500).result("Error finding restock report: " + e.getMessage());

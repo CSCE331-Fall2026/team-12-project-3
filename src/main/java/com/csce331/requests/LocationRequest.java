@@ -1,6 +1,8 @@
-package com.csce331.request;
+package com.csce331.requests;
 
-public record LocationRequest(String location) {
+import com.csce331.models.InventoryLocation;
+
+public record LocationRequest(InventoryLocation location) {
     public LocationRequest {
         if (location == null) {
             throw new IllegalArgumentException("Location cannot be null");

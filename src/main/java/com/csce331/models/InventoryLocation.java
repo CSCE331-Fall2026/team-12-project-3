@@ -9,7 +9,8 @@ public enum InventoryLocation {
     // TODO: Add utensils as a location
     FREEZER("Freezer"),
     REFRIGERATOR("Refrigerator"),
-    PANTRY("Pantry");
+    PANTRY("Pantry"),
+    UTENSILS("Utensils");
 
     private final String location;
 

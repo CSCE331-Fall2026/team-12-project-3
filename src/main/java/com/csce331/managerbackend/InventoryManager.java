@@ -125,8 +125,14 @@ public class InventoryManager extends DatabaseConnector {
      *
      * @param location the inventory location to query
      * @return a list of ingredients in that location
+     * @throws SQLException if the database query fails
+     * @throws IllegalArgumentException if the location is {@code UTENSILS}
      */
-    public List<Ingredient> getIngredients(InventoryLocation location) {
+    public List<Ingredient> getIngredients(InventoryLocation location) throws SQLException {
+        if (location == InventoryLocation.UTENSILS) {
+            throw new IllegalArgumentException("Cannot get ingredients from utensils");
+        }
+
         ArrayList<Ingredient> ingredientsInLocation = new ArrayList<>();
 
         try {
@@ -149,7 +155,6 @@ public class InventoryManager extends DatabaseConnector {
             }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
-            System.exit(0);
         }
 
         return ingredientsInLocation;
@@ -321,9 +326,14 @@ public class InventoryManager extends DatabaseConnector {
      * @return restock data for the ingredients in that location that need
      *         restocking
      * @throws SQLException if the database query fails
+     * @throws IllegalArgumentException if the location is {@code UTENSILS}
      */
     public List<IngredientRestockData> ingredientRestockReport(InventoryLocation location)
             throws SQLException {
+        if (location == InventoryLocation.UTENSILS) {
+            throw new IllegalArgumentException("Cannot get restock report for utensils");
+        }
+
         List <IngredientRestockData> restockReport = new ArrayList<>();
 
         try {
