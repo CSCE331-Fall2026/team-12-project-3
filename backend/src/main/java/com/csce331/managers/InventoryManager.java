@@ -1,6 +1,7 @@
 package com.csce331.managers;
 
 import java.sql.Statement;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -96,7 +97,11 @@ public class InventoryManager extends DatabaseConnector {
 
         try {
             Statement ingredientStatement = this.createStatement();
-            String ingredientQuery = "SELECT * FROM ingredients;";
+            String ingredientQuery = "SELECT i.name, i.inventory_type, i.unit, i.shelf_life, "
+                + "i.restock_threshold, COALESCE(SUM(inv.quantity), 0) AS quantity "
+                + "FROM ingredients AS i "
+                + "LEFT JOIN inventory AS inv ON inv.ingredient_id = i.id "
+                + "GROUP BY i.id, i.name, i.inventory_type, i.unit, i.shelf_life, i.restock_threshold;";
             ResultSet ingredientResultSet = ingredientStatement.executeQuery(ingredientQuery);
 
             while (ingredientResultSet.next()) {
@@ -109,6 +114,7 @@ public class InventoryManager extends DatabaseConnector {
                 Ingredient ingredient = new Ingredient.Builder(name, unit, location)
                     .lifespan(shelfLife)
                     .restockThreshold(restockThreshold)
+                    .quantity(ingredientResultSet.getBigDecimal("quantity"))
                     .build();
                 allIngredients.add(ingredient);
             }
@@ -136,10 +142,15 @@ public class InventoryManager extends DatabaseConnector {
         ArrayList<Ingredient> ingredientsInLocation = new ArrayList<>();
 
         try {
-            Statement ingredientStatement = this.createStatement();
-            String ingredientQuery = "SELECT * FROM ingredients "
-                + "WHERE inventory_type = '" + location.toString().toLowerCase() + "';";
-            ResultSet ingredientResultSet = ingredientStatement.executeQuery(ingredientQuery);
+            String ingredientQuery = "SELECT i.name, i.unit, i.shelf_life, i.restock_threshold, "
+                + "COALESCE(SUM(inv.quantity), 0) AS quantity "
+                + "FROM ingredients AS i "
+                + "LEFT JOIN inventory AS inv ON inv.ingredient_id = i.id "
+                + "WHERE i.inventory_type = ?::inventory_location "
+                + "GROUP BY i.id, i.name, i.unit, i.shelf_life, i.restock_threshold;";
+            PreparedStatement ingredientStatement = this.getConnection().prepareStatement(ingredientQuery);
+            ingredientStatement.setString(1, location.name().toLowerCase());
+            ResultSet ingredientResultSet = ingredientStatement.executeQuery();
 
             while (ingredientResultSet.next()) {
                 String name = ingredientResultSet.getString("name");
@@ -150,11 +161,13 @@ public class InventoryManager extends DatabaseConnector {
                 Ingredient ingredient = new Ingredient.Builder(name, unit, location)
                     .lifespan(shelfLife)
                     .restockThreshold(restockThreshold)
+                    .quantity(ingredientResultSet.getBigDecimal("quantity"))
                     .build();
                 ingredientsInLocation.add(ingredient);
             }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
+            throw e;
         }
 
         return ingredientsInLocation;
@@ -339,7 +352,7 @@ public class InventoryManager extends DatabaseConnector {
         try {
             Statement restockStatement = this.createStatement();
             String restockQuery = "SELECT ing.name, ing.unit, ing.shelf_life, "
-                + "ing.restock_threshold, "
+                + "ing.restock_threshold, COALESCE(SUM(inv.quantity), 0) AS total_quantity, "
                 + "SUM(CASE WHEN inv.restock_date + ing.shelf_life < CURRENT_DATE "
                 + "THEN inv.quantity ELSE 0 END) AS expired_quantity "
                 + "FROM ingredients AS ing "
@@ -359,6 +372,7 @@ public class InventoryManager extends DatabaseConnector {
                 Ingredient ingredient = new Ingredient.Builder(name, unit, location)
                     .lifespan(shelfLife)
                     .restockThreshold(restockThreshold)
+                    .quantity(restockResultSet.getBigDecimal("total_quantity"))
                     .build();
 
                 IngredientRestockData restockData = new IngredientRestockData(ingredient, 

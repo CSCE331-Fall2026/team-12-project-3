@@ -55,7 +55,8 @@ public class InventoryController {
         responses = {
             @OpenApiResponse(
                 status = "200",
-                description = "Every ingredient currently in the inventory.",
+                description = "Every ingredient, including the sum of its quantities "
+                    + "across all inventory records.",
                 content = @OpenApiContent(from = Ingredient[].class)
             ),
             @OpenApiResponse(
@@ -103,8 +104,9 @@ public class InventoryController {
         responses = {
             @OpenApiResponse(
                 status = "200",
-                description = "Ingredients at the location, or every utensil when "
-                    + "the location is UTENSILS.",
+                description = "Ingredients at the location, including the sum of "
+                    + "their quantities across all inventory records, or every "
+                    + "utensil when the location is UTENSILS.",
                 content = @OpenApiContent(from = Ingredient[].class)
             ),
             @OpenApiResponse(
