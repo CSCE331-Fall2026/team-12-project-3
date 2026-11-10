@@ -5,6 +5,11 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 import io.javalin.http.Context;
+import io.javalin.openapi.HttpMethod;
+import io.javalin.openapi.OpenApi;
+import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiRequestBody;
+import io.javalin.openapi.OpenApiResponse;
 
 import com.csce331.managers.AuthenticationManager;
 import com.csce331.models.UserRole;
@@ -38,6 +43,45 @@ public class AuthenticationController {
      *
      * @param ctx the request context
      */
+    @OpenApi(
+        path = "/auth/role/email",
+        methods = HttpMethod.POST,
+        operationId = "getUserRoleByEmail",
+        summary = "Look up a user's role by email",
+        description = "Returns the role of the user whose email is in the request "
+            + "body. Responds with 200 and the role, 404 if no user has that email, "
+            + "400 for an invalid request, and 500 if the database query fails. "
+            + "The handler is also registered for HTTP QUERY; POST is documented "
+            + "here because OpenAPI 3.1 cannot describe QUERY.",
+        tags = {"Authentication"},
+        requestBody = @OpenApiRequestBody(
+            description = "The email address of the user to look up.",
+            required = true,
+            content = @OpenApiContent(from = EmailRequest.class)
+        ),
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "The role assigned to the user.",
+                content = @OpenApiContent(from = UserRole.class)
+            ),
+            @OpenApiResponse(
+                status = "404",
+                description = "No user has the requested email address.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            ),
+            @OpenApiResponse(
+                status = "400",
+                description = "The email is missing or invalid.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            ),
+            @OpenApiResponse(
+                status = "500",
+                description = "The database query failed.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            )
+        }
+    )
     public static void getUserRoleByEmail(Context ctx) {
         try {
             EmailRequest request = ctx.bodyAsClass(EmailRequest.class);
@@ -63,6 +107,45 @@ public class AuthenticationController {
      *
      * @param ctx the request context
      */
+    @OpenApi(
+        path = "/auth/role/id",
+        methods = HttpMethod.POST,
+        operationId = "getUserRoleById",
+        summary = "Look up a user's role by Google ID",
+        description = "Returns the role of the user whose Google ID is in the "
+            + "request body. Responds with 200 and the role, 404 if no user has "
+            + "that ID, 400 for an invalid request, and 500 if the database query "
+            + "fails. The handler is also registered for HTTP QUERY; POST is "
+            + "documented here because OpenAPI 3.1 cannot describe QUERY.",
+        tags = {"Authentication"},
+        requestBody = @OpenApiRequestBody(
+            description = "The Google ID of the user to look up.",
+            required = true,
+            content = @OpenApiContent(from = GoogleIdRequest.class)
+        ),
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "The role assigned to the user.",
+                content = @OpenApiContent(from = UserRole.class)
+            ),
+            @OpenApiResponse(
+                status = "404",
+                description = "No user has the requested Google ID.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            ),
+            @OpenApiResponse(
+                status = "400",
+                description = "The Google ID is missing or invalid.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            ),
+            @OpenApiResponse(
+                status = "500",
+                description = "The database query failed.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            )
+        }
+    )
     public static void getUserRoleById(Context ctx) {
         try {
             GoogleIdRequest request = ctx.bodyAsClass(GoogleIdRequest.class);
@@ -88,6 +171,48 @@ public class AuthenticationController {
      *
      * @param ctx the request context
      */
+    @OpenApi(
+        path = "/auth/newuser",
+        methods = HttpMethod.POST,
+        operationId = "createUser",
+        summary = "Register a new user",
+        description = "Registers the user described in the request body. Responds "
+            + "with 201 when the user is created, 409 if the email is already "
+            + "registered, 400 for an invalid request, and 500 if the database "
+            + "update fails.",
+        tags = {"Authentication"},
+        requestBody = @OpenApiRequestBody(
+            description = "The user's email address, Google ID, and role.",
+            required = true,
+            content = @OpenApiContent(from = NewUserRequest.class)
+        ),
+        responses = {
+            @OpenApiResponse(
+                status = "201",
+                description = "The user was created.",
+                content = @OpenApiContent(
+                    from = String.class,
+                    mimeType = "text/plain",
+                    example = "User created successfully"
+                )
+            ),
+            @OpenApiResponse(
+                status = "409",
+                description = "A user with this email address is already registered.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            ),
+            @OpenApiResponse(
+                status = "400",
+                description = "The request body is missing required information.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            ),
+            @OpenApiResponse(
+                status = "500",
+                description = "The database update failed.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            )
+        }
+    )
     public static void createUser(Context ctx) {
         try {
             NewUserRequest request = ctx.bodyAsClass(NewUserRequest.class);

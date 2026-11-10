@@ -5,6 +5,11 @@ import java.sql.SQLException;
 import java.util.List;
 
 import io.javalin.http.Context;
+import io.javalin.openapi.HttpMethod;
+import io.javalin.openapi.OpenApi;
+import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiRequestBody;
+import io.javalin.openapi.OpenApiResponse;
 
 import com.csce331.managers.InventoryManager;
 import com.csce331.models.Ingredient;
@@ -39,6 +44,27 @@ public class InventoryController {
      *
      * @param ctx the request context
      */
+    @OpenApi(
+        path = "/manager/ingredients",
+        methods = HttpMethod.GET,
+        operationId = "getAllIngredients",
+        summary = "List every ingredient",
+        description = "Returns every ingredient in the inventory as JSON. "
+            + "Responds with 500 and an error message if the database query fails.",
+        tags = {"Inventory"},
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "Every ingredient currently in the inventory.",
+                content = @OpenApiContent(from = Ingredient[].class)
+            ),
+            @OpenApiResponse(
+                status = "500",
+                description = "The database query failed.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            )
+        }
+    )
     public static void allIngredients(Context ctx) {
         try {
             List<Ingredient> ingredients = inventoryManager.getIngredients();
@@ -57,6 +83,42 @@ public class InventoryController {
      *
      * @param ctx the request context
      */
+    @OpenApi(
+        path = "/manager/ingredients",
+        methods = HttpMethod.POST,
+        operationId = "getIngredientsByLocation",
+        summary = "List the ingredients stored at a location",
+        description = "Returns the ingredients stored in the requested location. "
+            + "Requesting the UTENSILS location returns every utensil instead. "
+            + "Responds with 400 for an unknown location and 500 if the database "
+            + "query fails. The handler is also registered for HTTP QUERY; POST is "
+            + "documented here because OpenAPI 3.1 cannot describe QUERY.",
+        tags = {"Inventory"},
+        requestBody = @OpenApiRequestBody(
+            description = "The storage location to list. Use UTENSILS to list "
+                + "utensils instead of ingredients.",
+            required = true,
+            content = @OpenApiContent(from = LocationRequest.class)
+        ),
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "Ingredients at the location, or every utensil when "
+                    + "the location is UTENSILS.",
+                content = @OpenApiContent(from = Ingredient[].class)
+            ),
+            @OpenApiResponse(
+                status = "400",
+                description = "The location is missing or unknown.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            ),
+            @OpenApiResponse(
+                status = "500",
+                description = "The database query failed.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            )
+        }
+    )
     public static void ingredientsByLocation(Context ctx) {
         try {
             LocationRequest request = ctx.bodyAsClass(LocationRequest.class);
@@ -89,6 +151,43 @@ public class InventoryController {
      *
      * @param ctx the request context
      */
+    @OpenApi(
+        path = "/manager/restock/",
+        methods = HttpMethod.PUT,
+        operationId = "restockItem",
+        summary = "Restock an ingredient or utensil",
+        description = "Adds the requested quantity to the named ingredient or "
+            + "utensil. Set isUtensil to true to restock a utensil. Responds with "
+            + "201 when the ingredient's today-dated stock row is created, 200 when "
+            + "existing stock is increased or a utensil is updated, 400 for an "
+            + "invalid quantity, and 500 if the database update fails.",
+        tags = {"Inventory"},
+        requestBody = @OpenApiRequestBody(
+            description = "The item to restock and the quantity to add.",
+            required = true,
+            content = @OpenApiContent(from = RestockRequest.class)
+        ),
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "Existing stock was increased, or a utensil was restocked."
+            ),
+            @OpenApiResponse(
+                status = "201",
+                description = "A new today-dated stock row was created for the ingredient."
+            ),
+            @OpenApiResponse(
+                status = "400",
+                description = "The request body is invalid or the quantity is not a number.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            ),
+            @OpenApiResponse(
+                status = "500",
+                description = "The database update failed.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            )
+        }
+    )
     public static void restock(Context ctx) {
         try {
             RestockRequest request = ctx.bodyAsClass(RestockRequest.class);
@@ -115,6 +214,41 @@ public class InventoryController {
      *
      * @param ctx the request context
      */
+    @OpenApi(
+        path = "/manager/threshold",
+        methods = HttpMethod.PATCH,
+        operationId = "setRestockThreshold",
+        summary = "Set an item's restock threshold",
+        description = "Sets the restock threshold of the named item to the "
+            + "quantity in the request body. Set isUtensil to true to update a "
+            + "utensil; otherwise an ingredient is updated. Responds with 200 on "
+            + "success, 400 for an invalid threshold, and 500 if the database "
+            + "update fails.",
+        tags = {"Inventory"},
+        requestBody = @OpenApiRequestBody(
+            description = "The item whose threshold is changing, the new "
+                + "threshold in the quantity field, and whether the item is a "
+                + "utensil.",
+            required = true,
+            content = @OpenApiContent(from = RestockRequest.class)
+        ),
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "The restock threshold was updated."
+            ),
+            @OpenApiResponse(
+                status = "400",
+                description = "The request body is invalid or the threshold is not a number.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            ),
+            @OpenApiResponse(
+                status = "500",
+                description = "The database update failed.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            )
+        }
+    )
     public static void setRestockThreshold(Context ctx) {
         try {
             RestockRequest request = ctx.bodyAsClass(RestockRequest.class);
@@ -139,6 +273,37 @@ public class InventoryController {
      *
      * @param ctx the request context
      */
+    @OpenApi(
+        path = "/manager/endday",
+        methods = HttpMethod.DELETE,
+        operationId = "endDay",
+        summary = "End the day and remove expired stock",
+        description = "Ends the current day by deleting stock that has outlived "
+            + "its shelf life. Responds with 204 when nothing was deleted, 200 "
+            + "with the number of deleted records as plain text otherwise, and "
+            + "500 if the delete fails.",
+        tags = {"Inventory"},
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "The number of stock records that were deleted.",
+                content = @OpenApiContent(
+                    from = String.class,
+                    mimeType = "text/plain",
+                    example = "12"
+                )
+            ),
+            @OpenApiResponse(
+                status = "204",
+                description = "No expired stock was found, so nothing was deleted."
+            ),
+            @OpenApiResponse(
+                status = "500",
+                description = "The delete failed.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            )
+        }
+    )
     public static void endDay(Context ctx) {
         try {
             int deletionCount = inventoryManager.endDay();
@@ -162,6 +327,43 @@ public class InventoryController {
      *
      * @param ctx the request context
      */
+    @OpenApi(
+        path = "/manager/restockreport",
+        methods = HttpMethod.POST,
+        operationId = "getRestockReport",
+        summary = "Get the restock report for a location",
+        description = "Returns the items at or below their restock threshold for "
+            + "the requested location, or every utensil when the location is "
+            + "UTENSILS. Responds with 400 for an unknown location and 500 if the "
+            + "database query fails. The handler is also registered for HTTP "
+            + "QUERY; POST is documented here because OpenAPI 3.1 cannot describe "
+            + "QUERY.",
+        tags = {"Inventory"},
+        requestBody = @OpenApiRequestBody(
+            description = "The storage location to report on. Use UTENSILS for "
+                + "the utensil report.",
+            required = true,
+            content = @OpenApiContent(from = LocationRequest.class)
+        ),
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "Ingredients at or below their restock threshold, "
+                    + "or every utensil when the location is UTENSILS.",
+                content = @OpenApiContent(from = IngredientRestockData[].class)
+            ),
+            @OpenApiResponse(
+                status = "400",
+                description = "The location is missing or unknown.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            ),
+            @OpenApiResponse(
+                status = "500",
+                description = "The database query failed.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            )
+        }
+    )
     public static void restockReport(Context ctx) {
         try {
             LocationRequest request = ctx.bodyAsClass(LocationRequest.class);
