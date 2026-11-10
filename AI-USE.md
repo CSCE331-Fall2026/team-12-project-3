@@ -72,11 +72,19 @@
 **Output: ** `sprint-materials/sprint1-meetings.md`
 
 ## 13. Reorganize Backend
+
 **Prompt: ** Move all *Manager classes in the backend in the *backend packages to their own unified package called managers, and update imports accordingly.
 
 **Output: ** The result of commit ID `42c58f9`.
 
 ## 14. Document Authentication
+
 **Prompt: ** Add docstrings to all undocumented classes such that mvn javadoc:javadoc yields no errors. Ensure that the documentation doesn't expose implementation details unless there's a state change an API consumer would need to know about.
 
 **Output: ** The result of commit ID `da62374`.
+
+## 15. Swagger UI
+
+**Prompt: ** Add the necessary Swagger annotations to all of the endpoints in App describing them in accordance to the docstrings for the corresponding methods such that an API consumer knows how to use the API. Reference the Javalin OpenAPI plugin documentation online for reference: https://javalin.github.io/javalin-openapi/introduction/setup.html
+
+**Output: ** The result of commit ID `4d6cbf5`.
