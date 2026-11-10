@@ -1,5 +1,6 @@
 package com.csce331.models;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +22,7 @@ public class Ingredient {
     private final InventoryLocation location;
     private final int lifespan;
     private int restockThreshold;
+    private final BigDecimal quantity;
 
     /**
      * Creates an ingredient from the builder's configuration.
@@ -33,6 +35,7 @@ public class Ingredient {
         this.location = builder.location;
         this.lifespan = builder.lifespan;
         this.restockThreshold = builder.restockThreshold;
+        this.quantity = builder.quantity;
     }
 
     /**
@@ -82,6 +85,15 @@ public class Ingredient {
     }
 
     /**
+     * Returns the total quantity currently recorded for this ingredient.
+     *
+     * @return the summed inventory quantity
+     */
+    public BigDecimal getQuantity() {
+        return this.quantity;
+    }
+
+    /**
      * Builder for constructing {@link Ingredient} instances.
      *
      * @author Kedar Panchal
@@ -92,6 +104,7 @@ public class Ingredient {
         private final InventoryLocation location;
         private int lifespan;
         private int restockThreshold;
+        private BigDecimal quantity;
 
         /**
          * Creates a builder for an ingredient with the given identity. The
@@ -107,6 +120,7 @@ public class Ingredient {
             this.location = location;
             this.lifespan = 0;
             this.restockThreshold = 1;
+            this.quantity = BigDecimal.ZERO;
         }
 
         /**
@@ -129,6 +143,17 @@ public class Ingredient {
          */
         public Builder restockThreshold(int restockThreshold) {
             this.restockThreshold = restockThreshold;
+            return this;
+        }
+
+        /**
+         * Sets the total quantity currently recorded for this ingredient.
+         *
+         * @param quantity the summed inventory quantity, which must not be negative
+         * @return this builder
+         */
+        public Builder quantity(BigDecimal quantity) {
+            this.quantity = quantity;
             return this;
         }
 
@@ -159,6 +184,10 @@ public class Ingredient {
 
             if (this.restockThreshold <= 0) {
                 throw new IllegalArgumentException("Ingredient restock threshold must be positive");
+            }
+
+            if (this.quantity == null || this.quantity.signum() < 0) {
+                throw new IllegalArgumentException("Ingredient quantity cannot be negative or null");
             }
 
             return new Ingredient(this);

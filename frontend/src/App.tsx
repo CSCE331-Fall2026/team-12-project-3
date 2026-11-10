@@ -4,7 +4,15 @@ import './App.css'
 type UserRole = 'CUSTOMER' | 'MANAGER'
 type GoogleProfile = { email: string; googleId: string }
 type GoogleCredential = { credential: string }
-type InventoryItem = { name: string; quantity: number; restockThreshold: number }
+type InventoryCategory = 'FREEZER' | 'REFRIGERATOR' | 'PANTRY' | 'UTENSILS'
+type InventoryItem = { name: string; quantity?: number; restockThreshold: number; unit?: string }
+
+const inventoryCategories: { id: InventoryCategory; label: string }[] = [
+  { id: 'FREEZER', label: 'Freezer' },
+  { id: 'REFRIGERATOR', label: 'Refrigerator' },
+  { id: 'PANTRY', label: 'Pantry' },
+  { id: 'UTENSILS', label: 'Utensils' },
+]
 
 declare global {
   interface Window {
@@ -33,6 +41,29 @@ function apiFetch(path: string, init?: RequestInit) {
   return fetch(url, init)
 }
 
+async function fetchInventoryItems(category: InventoryCategory) {
+  const response = await apiFetch('/manager/ingredients', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ location: category }),
+  })
+  if (!response.ok) {
+    const detail = (await response.text()).trim()
+    throw new Error(detail || 'Inventory could not be loaded. Check that the backend is running.')
+  }
+  return response.json() as Promise<InventoryItem[]>
+}
+
+function displayUnit(unit: string | undefined, category: InventoryCategory) {
+  if (category === 'UTENSILS') return 'ea'
+  switch (unit?.toUpperCase()) {
+    case 'KILOGRAMS': return 'kg'
+    case 'LITERS': return 'L'
+    case 'ITEMS': return 'ea'
+    default: return unit ?? ''
+  }
+}
+
 function profileFromCredential(credential: string): GoogleProfile {
   const payload = credential.split('.')[1]
   if (!payload) throw new Error('Google returned an invalid sign-in response.')
@@ -54,9 +85,12 @@ async function readRole(response: Response): Promise<UserRole> {
 
 function App() {
   const [profile, setProfile] = useState<GoogleProfile | null>(null)
-  const [role, setRole] = useState<UserRole>('CUSTOMER')
   const [screen, setScreen] = useState<'signin' | 'role' | 'customer' | 'manager'>('signin')
   const [items, setItems] = useState<InventoryItem[]>([])
+  const [category, setCategory] = useState<InventoryCategory>('FREEZER')
+  const [editingItem, setEditingItem] = useState<string | null>(null)
+  const [restockQuantity, setRestockQuantity] = useState('')
+  const [restocking, setRestocking] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -74,7 +108,6 @@ function App() {
 
       if (response.ok) {
         const savedRole = await readRole(response)
-        setRole(savedRole)
         setScreen(savedRole === 'MANAGER' ? 'manager' : 'customer')
       } else if (response.status === 404) {
         setScreen('role')
@@ -125,22 +158,43 @@ function App() {
     let active = true
     setLoading(true)
     setError('')
-    apiFetch('/manager/ingredients', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ location: 'UTENSILS' }),
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error('Inventory could not be loaded. Check that the backend is running.')
-        return response.json() as Promise<InventoryItem[]>
-      })
+    fetchInventoryItems(category)
       .then((data) => { if (active) setItems(data) })
       .catch((cause: unknown) => {
         if (active) setError(cause instanceof Error ? cause.message : 'Inventory could not be loaded.')
       })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [screen])
+  }, [screen, category])
+
+  const saveRestock = async (item: InventoryItem) => {
+    const quantity = Number(restockQuantity)
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      setError('Enter a whole number greater than zero.')
+      return
+    }
+
+    setRestocking(true)
+    setError('')
+    try {
+      const response = await apiFetch('/manager/restock/', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: item.name, quantity, isUtensil: category === 'UTENSILS' }),
+      })
+      if (!response.ok) {
+        const detail = (await response.text()).trim()
+        throw new Error(detail || 'The item could not be restocked.')
+      }
+      setItems(await fetchInventoryItems(category))
+      setEditingItem(null)
+      setRestockQuantity('')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'The item could not be restocked.')
+    } finally {
+      setRestocking(false)
+    }
+  }
 
   const chooseRole = async (selectedRole: UserRole) => {
     if (!profile) return
@@ -156,7 +210,6 @@ function App() {
         const detail = await response.text()
         throw new Error(detail || 'Your role could not be saved.')
       }
-      setRole(selectedRole)
       setScreen(selectedRole === 'MANAGER' ? 'manager' : 'customer')
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Your role could not be saved.')
@@ -249,26 +302,63 @@ function App() {
             <div className="manager-user"><span className="avatar">{profile?.email.slice(0, 1).toUpperCase()}</span><span>{profile?.email}</span></div>
           </div>
           <section className="inventory-section">
-            <div className="inventory-header"><div><h2>Utensils &amp; supplies</h2><p className="muted">Current quantity compared with its restock threshold.</p></div></div>
+            <div className="inventory-header"><div><h2>{inventoryCategories.find((entry) => entry.id === category)?.label} inventory</h2><p className="muted">Current quantity compared with its restock threshold.</p></div></div>
+            <nav className="category-tabs" aria-label="Inventory categories">
+              {inventoryCategories.map((entry) => (
+                <button
+                  key={entry.id}
+                  className={`category-tab ${category === entry.id ? 'category-tab-active' : ''}`}
+                  type="button"
+                  aria-pressed={category === entry.id}
+                  onClick={() => { setCategory(entry.id); setEditingItem(null); setRestockQuantity(''); setError('') }}
+                >
+                  {entry.label}
+                </button>
+              ))}
+            </nav>
             {loading && <p className="muted" role="status">Loading inventory…</p>}
             {error && <p className="error-message" role="alert">{error}</p>}
-            {!loading && !error && <div className="table-wrap">
+            {!loading && <div className="table-wrap">
               <table>
                 <thead><tr><th>Inventory item</th><th>Amount on hand</th><th>Restock threshold</th><th>Status</th></tr></thead>
                 <tbody>{items.map((item) => {
-                  const low = item.quantity <= item.restockThreshold
+                  const unit = displayUnit(item.unit, category)
+                  const low = item.quantity !== undefined && item.quantity <= item.restockThreshold
                   return <tr key={item.name}>
                     <td className="item-name">{item.name}</td>
-                    <td className="amount">{item.quantity} <span>ea</span></td>
-                    <td className="amount">{item.restockThreshold} <span>ea</span></td>
-                    <td><span className={`status ${low ? 'status-low' : 'status-ok'}`}>{low ? 'Restock' : 'In stock'}</span></td>
+                    <td>
+                      <div className="quantity-cell">
+                        <span className="amount">{item.quantity ?? '—'} {unit && <span>{unit}</span>}</span>
+                        {editingItem === item.name ? (
+                          <form className="restock-form" onSubmit={(event) => { event.preventDefault(); void saveRestock(item) }}>
+                            <label className="sr-only" htmlFor={`restock-${category}-${item.name}`}>Amount to add to {item.name}</label>
+                            <input
+                              id={`restock-${category}-${item.name}`}
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={restockQuantity}
+                              onChange={(event) => setRestockQuantity(event.target.value)}
+                              placeholder="Qty"
+                              required
+                            />
+                            <button className="small-action save-action" type="submit" disabled={restocking}>Save</button>
+                            <button className="small-action cancel-action" type="button" disabled={restocking} onClick={() => { setEditingItem(null); setRestockQuantity(''); setError('') }}>Cancel</button>
+                          </form>
+                        ) : (
+                          <button className="edit-action" type="button" onClick={() => { setEditingItem(item.name); setRestockQuantity(''); setError('') }}>Edit</button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="amount">{item.restockThreshold} {unit && <span>{unit}</span>}</td>
+                    <td><span className={`status ${item.quantity === undefined ? 'status-unavailable' : low ? 'status-low' : 'status-ok'}`}>{item.quantity === undefined ? 'Count unavailable' : low ? 'Restock' : 'In stock'}</span></td>
                   </tr>
                 })}</tbody>
               </table>
               {items.length === 0 && <p className="empty-state">No inventory items found.</p>}
             </div>}
           </section>
-          <p className="manager-foot">Signed in as {role === 'MANAGER' ? 'manager' : 'customer'}</p>
+          <p className="manager-foot">Items at or below their threshold need restocking.</p>
         </main>
       )}
     </div>
