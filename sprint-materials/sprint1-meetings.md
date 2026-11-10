@@ -79,8 +79,33 @@ During this session, we went over what we accomplished over the past few days, w
 
 ### Key Accomplishments
 
-* **Started work on **
+* **Started work on Accounts DB**
+* **Looked into different methods of authentication**
+* **Created a Vite app with React and Typescript**
 
 ---
 
-> **Next Steps:** Finish porting elements from Project 2
+> **Next Steps:** Finish Accounts, OAUTH, and the Web Interface
+
+
+# Scrum Retrospective Meeting
+
+* **Date:** November 9, 2026
+* **Time:** 6:00 PM – 8:00 PM
+* **Attendees:** Kedar Panchal, Evan Chang, Vihal Arumalla
+
+---
+
+## Meeting Summary
+
+During this session, we ...
+
+### Key Accomplishments
+
+* **...**
+
+---
+
+> **Next Steps:** ...
+
+
