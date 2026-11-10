@@ -1,6 +1,8 @@
 package com.csce331;
 
 import io.javalin.Javalin;
+import io.javalin.openapi.plugin.OpenApiPlugin;
+import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 
 import com.csce331.controllers.InventoryController;
 import com.csce331.controllers.MenuItemController;
@@ -25,6 +27,17 @@ public class App {
      */
     public static void main(String[] args) {
         Javalin app = Javalin.create(config -> {
+            config.registerPlugin(new OpenApiPlugin(openapi -> {
+                openapi.withDefinitionConfiguration((version, builder) -> {
+                    builder.info(info -> info
+                        .title("CSCE 331 Project 3 API")
+                        .version("1.0.0")
+                    );
+                });
+            }));
+
+            config.registerPlugin(new SwaggerPlugin());
+
             config.routes.get("/", ctx -> ctx.result("Up and running!"));
 
             config.routes.get("/manager/ingredients", InventoryController::allIngredients);
@@ -35,7 +48,7 @@ public class App {
             config.routes.query("/manager/restockreport", InventoryController::restockReport);
             config.routes.get("/manager/menuitems", MenuItemController::allMenuItems);
             config.routes.query("/manager/menuitems", MenuItemController::menuItemByCategory);
-            config.routes.patch("/manager/menuitems", MenuItemController::updatePrice);
+            config.routes.patch("/manager/menuitems/price", MenuItemController::updatePrice);
             config.routes.patch("/manager/menuitems/discontinue", MenuItemController::discontinueMenuItem);
             config.routes.get("/manager/salesreport", MenuItemController::salesReport);
 
