@@ -61,6 +61,8 @@ public class App {
      */
     public static void main(String[] args) {
         Javalin app = Javalin.create(config -> {
+            config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> rule.anyHost()));
+
             config.registerPlugin(new OpenApiPlugin(openapi -> {
                 openapi.withDefinitionConfiguration((version, builder) -> {
                     builder.info(info -> info
@@ -71,7 +73,7 @@ public class App {
             }));
 
             config.registerPlugin(new SwaggerPlugin());
-
+            
             config.routes.get("/", App::root);
 
             config.routes.get("/manager/ingredients", InventoryController::allIngredients);
