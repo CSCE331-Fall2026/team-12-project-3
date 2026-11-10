@@ -40,6 +40,13 @@ Frontend: The frontend will utilize React for the web application and Tailwind
 to handle CSS. The application will be hosted on Vercel and will use Vite for
 bundling. Authentication will be performed using OAuth2.0.
 
+### Frontend environment
+
+Set `BACKEND_URL` to the backend API base URL in `frontend/.env.local` for local
+development, or in the frontend host's environment settings for deployment. For
+example: `BACKEND_URL=https://your-backend.example.com`. The URL is included in
+the frontend bundle, so it must be a public API URL and must not contain secrets.
+
 Novel Feature: The novel feature will utilize Python and PyTorch to build and
 train the recurrent neural network. The database will be ingested using Pandas
 and the project will be managed and built using uv.
