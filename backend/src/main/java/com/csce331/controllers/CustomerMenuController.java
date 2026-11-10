@@ -19,6 +19,12 @@ public class CustomerMenuController {
     private static final OrderManager orderManager = new OrderManager();
 
     /**
+     * Prevents instantiation; the handlers are all static.
+     */
+    private CustomerMenuController() {
+    }
+
+    /**
      * Responds with the most popular active menu items.
      *
      * @param ctx the Javalin request context

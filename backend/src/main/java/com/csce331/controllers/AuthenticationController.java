@@ -12,9 +12,32 @@ import com.csce331.requests.EmailRequest;
 import com.csce331.requests.GoogleIdRequest;
 import com.csce331.requests.NewUserRequest;
 
+/**
+ * Handles the authentication HTTP endpoints: looking up a user's role and
+ * registering new users.
+ *
+ * <p>Each method takes the Javalin request context, delegates the work to an
+ * {@link AuthenticationManager}, and writes the status code and body of the
+ * response itself. Failures are reported to the client as an error status
+ * rather than being thrown.
+ */
 public class AuthenticationController {
     private static final AuthenticationManager authManager = new AuthenticationManager();
 
+    /**
+     * Prevents instantiation; the handlers are all static.
+     */
+    private AuthenticationController() {
+    }
+
+    /**
+     * Responds with the role of the user whose email is in the request body.
+     *
+     * <p>Responds 200 with the role, 404 if no user has that email, 400 for an
+     * invalid request, and 500 if the database query fails.
+     *
+     * @param ctx the request context
+     */
     public static void getUserRoleByEmail(Context ctx) {
         try {
             EmailRequest request = ctx.bodyAsClass(EmailRequest.class);
@@ -31,6 +54,15 @@ public class AuthenticationController {
         }
     }
 
+    /**
+     * Responds with the role of the user whose Google ID is in the request
+     * body.
+     *
+     * <p>Responds 200 with the role, 404 if no user has that ID, 400 for an
+     * invalid request, and 500 if the database query fails.
+     *
+     * @param ctx the request context
+     */
     public static void getUserRoleById(Context ctx) {
         try {
             GoogleIdRequest request = ctx.bodyAsClass(GoogleIdRequest.class);
@@ -47,6 +79,15 @@ public class AuthenticationController {
         }
     }
 
+    /**
+     * Registers the user described in the request body.
+     *
+     * <p>Responds 201 when the user is created, 409 if the email is already
+     * registered, 400 for an invalid request, and 500 if the database update
+     * fails.
+     *
+     * @param ctx the request context
+     */
     public static void createUser(Context ctx) {
         try {
             NewUserRequest request = ctx.bodyAsClass(NewUserRequest.class);
