@@ -1,6 +1,9 @@
 -- EXTENSIONS -----------------------------------------------------------------
 CREATE EXTENSION IF NOT EXISTS citext;
 
+-- EXTENSIONS -----------------------------------------------------------------
+CREATE EXTENSION IF NOT EXISTS citext;
+
 -- CUSTOM DATA TYPES ----------------------------------------------------------
 CREATE TYPE payment_type AS ENUM (
     'cash', 
@@ -19,6 +22,7 @@ CREATE TYPE size_category AS ENUM ('small', 'medium', 'large');
 CREATE TYPE inventory_location AS ENUM ('pantry', 'refrigerator', 'freezer');
 CREATE TYPE ingredient_unit AS ENUM ('kilograms', 'liters', 'items');
 CREATE TYPE user_role AS ENUM ('manager', 'customer');
+CREATE TYPE user_role AS ENUM ('manager', 'customer');
 
 -- RESET DATABASE -------------------------------------------------------------
 DROP TABLE IF EXISTS order_menu;
@@ -29,6 +33,7 @@ DROP TABLE IF EXISTS menu_items;
 DROP TABLE IF EXISTS inventory;
 DROP TABLE IF EXISTS ingredients;
 DROP TABLE IF EXISTS utensils;
+DROP TABLE IF EXISTS accounts;
 DROP TABLE IF EXISTS accounts;
 
 -- DATABASE TABLES ------------------------------------------------------------
@@ -70,7 +75,7 @@ CREATE TABLE IF NOT EXISTS inventory (
 
 CREATE TABLE IF NOT EXISTS utensils (
     name TEXT NOT NULL,
-    quantity INT NOT NULL CHECK (current_amount >= 0) DEFAULT 0,
+    quantity INT NOT NULL CHECK (quantity >= 0) DEFAULT 0,
     restock_threshold INT NOT NULL CHECK (restock_threshold >= 0) DEFAULT 0,
     id SERIAL PRIMARY KEY
 );
@@ -229,7 +234,7 @@ INSERT INTO ingredients (name, shelf_life, restock_threshold, inventory_type, un
 
 -- UTENSIL POPULATION ---------------------------------------------------------
 -- Add containers
-INSERT INTO utensils (name, current_amount, restock_threshold) VALUES
+INSERT INTO utensils (name, quantity, restock_threshold) VALUES
     ('Takeout Carton', 0, 600),
     ('Clamshell Container', 0, 1000),
     ('Portion Cup', 0, 750),
@@ -238,14 +243,14 @@ INSERT INTO utensils (name, current_amount, restock_threshold) VALUES
     ('Paper Bag', 0, 1000);
 
 -- Add utensils
-INSERT INTO utensils (name, current_amount, restock_threshold) VALUES
+INSERT INTO utensils (name, quantity, restock_threshold) VALUES
     ('Fork', 0, 1000),
     ('Knife', 0, 1000),
     ('Spoon', 0, 1000),
     ('Chopsticks', 0, 1000);
 
 -- Add miscellaneous
-INSERT INTO utensils (name, current_amount, restock_threshold) VALUES
+INSERT INTO utensils (name, quantity, restock_threshold) VALUES
     ('Napkin', 0, 2000),
     ('Straw', 0, 1500);
 

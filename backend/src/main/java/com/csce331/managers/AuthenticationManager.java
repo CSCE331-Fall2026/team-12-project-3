@@ -11,7 +11,7 @@ import com.csce331.common.ExceptionLogger;
 import com.csce331.models.UserRole;
 
 /**
- * Manages user accounts: looking up a user's role and registering new users.
+ * Manages user accounts: looking up a user's role and registering new accounts.
  *
  * <p>Each method reads from or writes to the database and returns the result.
  * A failed query is logged and rethrown.
@@ -34,7 +34,7 @@ public class AuthenticationManager extends DatabaseConnector {
     public Optional<UserRole> getUserRoleByEmail(String email) throws SQLException {
         try {
             Statement emailStatement = this.createStatement();
-            String query = "SELECT role FROM users WHERE email = '" + email + "' LIMIT 1";
+            String query = "SELECT role FROM accounts WHERE email = '" + email + "' LIMIT 1";
             ResultSet resultSet = emailStatement.executeQuery(query);
             if (resultSet.next()) {
                 String roleString = resultSet.getString("role");
@@ -58,7 +58,7 @@ public class AuthenticationManager extends DatabaseConnector {
     public Optional<UserRole> getUserRoleById(String googleId) throws SQLException {
         try {
             Statement idStatement = this.createStatement();
-            String query = "SELECT role FROM users WHERE id = " + googleId + " LIMIT 1";
+            String query = "SELECT role FROM accounts WHERE id = " + googleId + " LIMIT 1";
             ResultSet resultSet = idStatement.executeQuery(query);
             if (resultSet.next()) {
                 String roleString = resultSet.getString("role");
@@ -84,7 +84,7 @@ public class AuthenticationManager extends DatabaseConnector {
     public void createUser(String email, UserRole role, String googleId) throws SQLException {
         try {
             Statement createStatement = this.createStatement();
-            String query = "INSERT INTO users (email, role, google_id) VALUES " +
+            String query = "INSERT INTO accounts (email, role, google_id) VALUES " +
                 "('" + email + "', '" + role.toString() + "', '" + googleId + "')";
             createStatement.executeUpdate(query);
         } catch (SQLException e) {
