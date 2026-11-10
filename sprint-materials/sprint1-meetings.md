@@ -102,9 +102,10 @@ During this session, we discussed what went well during sprint 1, what didn't, a
 
 ### Key Accomplishments
 
-* **What went well:** We completed all the stories that were planned during the sprint.
-* **What didn't go well:** We did a lot of work that wasn't in the stories to be able to do the work in the stories. If we planned better, we would've had a better understanding on what we needed to do before what was in the stories.
-* **Sprint Velocity:** We completed all the story points though we had to do much more work than we anticipated due to the above issues
+* **What went well:** We were able to complete all of the stories planned for sprint 1 on time and we communicated our progress well with each other.
+* **What didn't go well:** We noticed our user stories didn't accurately reflect the amount of effort some tasks would take; some were trivial and the 
+user stories were too granular (such as the backend refactor), while others took far more time than anticipated (such as OAuth authentication).
+* **Sprint Velocity:** We completed all the story points, though we had to do much more work than we anticipated due to poor sprint planning and user story definitions.
 
 ---
 
