@@ -35,7 +35,7 @@ public class App {
             config.routes.get("/manager/menuitems", MenuItemController::allMenuItems);
             config.routes.query("/manager/menuitems", MenuItemController::menuItemByCategory);
             config.routes.patch("/manager/menuitems", MenuItemController::updatePrice);
-            config.routes.patch("/manager/menuitems", MenuItemController::discontinueMenuItem);
+            config.routes.patch("/manager/menuitems/discontinue", MenuItemController::discontinueMenuItem);
             config.routes.get("/manager/salesreport", MenuItemController::salesReport);
 
             config.routes.get("/customer/menuitems", CustomerMenuController::popularItems);
