@@ -41,6 +41,10 @@ public class App {
             config.routes.get("/customer/menuitems", CustomerMenuController::popularItems);
             config.routes.query("/customer/menuitems", CustomerMenuController::menuItemByCategory);
             config.routes.post("/customer/order", CustomerMenuController::order);
+
+            config.routes.query("/auth/role/email", AuthenticationController::getUserRoleByEmail);
+            config.routes.query("/auth/role/id", AuthenticationController::getUserRoleById);
+            config.routes.post("/auth/newuser", AuthenticationController::createUser);
         }).start(8080);
     }
 }
