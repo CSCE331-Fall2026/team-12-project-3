@@ -10,7 +10,7 @@ import com.csce331.models.MenuItem;
 import com.csce331.models.MenuItemCategory;
 import com.csce331.requests.CategoryRequest;
 import com.csce331.requests.OrderRequest;
-import com.csce331.customerbackend.OrderManager;
+import com.csce331.managers.OrderManager;
 
 /**
  * HTTP handlers for browsing the customer menu.

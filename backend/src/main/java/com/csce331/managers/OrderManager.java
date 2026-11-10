@@ -1,4 +1,4 @@
-package com.csce331.customerbackend;
+package com.csce331.managers;
 
 import java.math.BigDecimal;
 import java.sql.Connection;

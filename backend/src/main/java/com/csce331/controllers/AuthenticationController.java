@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import io.javalin.http.Context;
 
-import com.csce331.authentication.AuthenticationManager;
+import com.csce331.managers.AuthenticationManager;
 import com.csce331.models.UserRole;
 import com.csce331.requests.EmailRequest;
 import com.csce331.requests.GoogleIdRequest;
