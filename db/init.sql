@@ -1,3 +1,6 @@
+-- EXTENSIONS -----------------------------------------------------------------
+CREATE EXTENSION IF NOT EXISTS citext;
+
 -- CUSTOM DATA TYPES ----------------------------------------------------------
 CREATE TYPE payment_type AS ENUM (
     'cash', 
@@ -15,6 +18,7 @@ CREATE TYPE menu_category AS ENUM (
 CREATE TYPE size_category AS ENUM ('small', 'medium', 'large');
 CREATE TYPE inventory_location AS ENUM ('pantry', 'refrigerator', 'freezer');
 CREATE TYPE ingredient_unit AS ENUM ('kilograms', 'liters', 'items');
+CREATE TYPE user_role AS ENUM ('manager', 'customer');
 
 -- RESET DATABASE -------------------------------------------------------------
 DROP TABLE IF EXISTS order_menu;
@@ -25,6 +29,7 @@ DROP TABLE IF EXISTS menu_items;
 DROP TABLE IF EXISTS inventory;
 DROP TABLE IF EXISTS ingredients;
 DROP TABLE IF EXISTS utensils;
+DROP TABLE IF EXISTS accounts;
 
 -- DATABASE TABLES ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS orders (
@@ -69,6 +74,13 @@ CREATE TABLE IF NOT EXISTS utensils (
     restock_threshold INT NOT NULL CHECK (restock_threshold >= 0) DEFAULT 0,
     id SERIAL PRIMARY KEY
 );
+
+CREATE TABLE IF NOT EXISTS accounts (
+    email CITEXT NOT NULL UNIQUE,
+    role user_role NOT NULL,
+    google_id TEXT NOT NULL UNIQUE,
+    id SERIAL PRIMARY KEY
+)
 
 -- JUNCTION TABLES ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS order_menu (

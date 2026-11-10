@@ -48,6 +48,17 @@
             <version>3.2.4</version>
             <scope>compile</scope>
         </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/io.javalin/javalin-openapi -->
+        <dependency>
+            <groupId>io.javalin.community.openapi</groupId>
+            <artifactId>javalin-openapi-plugin</artifactId>
+            <version>7.2.4</version>
+        </dependency>
+        <dependency>
+            <groupId>io.javalin.community.openapi</groupId>
+            <artifactId>javalin-swagger-plugin</artifactId>
+            <version>7.2.4</version>
+        </dependency>
     </dependencies>
     
 
@@ -80,6 +91,25 @@
         </pluginManagement>
 
         <plugins>
+            <!-- Run the OpenAPI annotation processor so @OpenApi handlers are documented -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>io.javalin.community.openapi</groupId>
+                            <artifactId>openapi-annotation-processor</artifactId>
+                            <version>7.2.4</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Aopenapi.info.title=CSCE 331 Project 3 API</arg>
+                        <arg>-Aopenapi.info.version=1.0.0</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
             <!-- Package the project as an executable jar -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
