@@ -23,6 +23,14 @@ declare global {
 }
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+const backendUrl = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, '')
+
+function apiFetch(path: string, init?: RequestInit) {
+  if (!backendUrl) {
+    return Promise.reject(new Error('Set BACKEND_URL in the frontend environment to connect to the backend.'))
+  }
+  return fetch(`${backendUrl}${path}`, init)
+}
 
 function profileFromCredential(credential: string): GoogleProfile {
   const payload = credential.split('.')[1]
@@ -57,7 +65,7 @@ function App() {
     try {
       const nextProfile = profileFromCredential(credential)
       setProfile(nextProfile)
-      const response = await fetch('/api/auth/role/email', {
+      const response = await apiFetch('/auth/role/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: nextProfile.email }),
@@ -116,7 +124,7 @@ function App() {
     let active = true
     setLoading(true)
     setError('')
-    fetch('/api/manager/ingredients', {
+    apiFetch('/manager/ingredients', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ location: 'UTENSILS' }),
@@ -138,7 +146,7 @@ function App() {
     setLoading(true)
     setError('')
     try {
-      const response = await fetch('/api/auth/newuser', {
+      const response = await apiFetch('/auth/newuser', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...profile, role: selectedRole }),
