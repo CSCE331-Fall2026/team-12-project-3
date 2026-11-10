@@ -2,7 +2,7 @@ package com.csce331.models;
 
 public enum UserRole {
     CUSTOMER("customer"),
-    MANAGER("manager"),
+    MANAGER("manager");
 
     private final String displayName;
 
