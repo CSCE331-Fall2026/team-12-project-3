@@ -29,7 +29,8 @@ function apiFetch(path: string, init?: RequestInit) {
   if (!backendUrl) {
     return Promise.reject(new Error('Set BACKEND_URL in the frontend environment to connect to the backend.'))
   }
-  return fetch(`${backendUrl}${path}`, init)
+  const url = import.meta.env.DEV ? `/api${path}` : `${backendUrl}${path}`
+  return fetch(url, init)
 }
 
 function profileFromCredential(credential: string): GoogleProfile {

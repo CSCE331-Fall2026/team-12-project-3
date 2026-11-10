@@ -10,5 +10,16 @@ export default defineConfig(({ mode }) => {
     define: {
       'import.meta.env.VITE_BACKEND_URL': JSON.stringify(env.BACKEND_URL),
     },
+    ...(env.BACKEND_URL ? {
+      server: {
+        proxy: {
+          '/api': {
+            target: env.BACKEND_URL,
+            changeOrigin: true,
+            rewrite: (path: string) => path.replace(/^\/api/, ''),
+          },
+        },
+      },
+    } : {}),
   }
 })
