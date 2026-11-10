@@ -6,7 +6,7 @@ import java.util.List;
 
 import io.javalin.http.Context;
 
-import com.csce331.managerbackend.InventoryManager;
+import com.csce331.managers.InventoryManager;
 import com.csce331.models.Ingredient;
 import com.csce331.models.Utensil;
 import com.csce331.models.InventoryLocation;

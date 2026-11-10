@@ -1,4 +1,4 @@
-package com.csce331.managerbackend;
+package com.csce331.managers;
 
 import java.sql.Statement;
 import java.sql.ResultSet;

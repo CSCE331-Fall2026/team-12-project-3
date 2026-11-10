@@ -16,7 +16,7 @@ import com.csce331.requests.DateRangeRequest;
 import com.csce331.requests.CategoryRequest;
 import com.csce331.requests.PriceUpdateRequest;
 import com.csce331.requests.DiscontinueRequest;
-import com.csce331.managerbackend.MenuItemManager;
+import com.csce331.managers.MenuItemManager;
 
 /**
  * HTTP handlers for browsing the menu, updating prices, and discontinuing
