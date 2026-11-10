@@ -20,3 +20,67 @@ During this session, the team successfully completed the core sprint planning ac
 ---
 
 > **Next Steps:** Review the assigned tasks in the project management board and begin execution for Sprint 1.
+
+
+# Scrum Meeting 1
+
+* **Date:** October 30, 2026
+* **Time:** 11:50 PM – 12:20 PM
+* **Attendees:** Kedar Panchal, Evan Chang, Vihal Arumalla
+
+---
+
+## Meeting Summary
+
+During this session, we went over what we accomplished over the past few days, what stopped us from progressing, and what we wanted to do in future days.
+
+### Key Accomplishments
+
+* **Set up project**
+* **Ported some elements from Project 2**
+
+---
+
+> **Next Steps:** Finish porting elements from Project 2
+
+
+# Scrum Meeting 2
+
+* **Date:** November 2, 2026
+* **Time:** 11:50 PM – 12:20 PM
+* **Attendees:** Kedar Panchal, Evan Chang, Vihal Arumalla
+
+---
+
+## Meeting Summary
+
+During this session, we went over what we accomplished over the past few days, what stopped us from progressing, and what we wanted to do in future days.
+
+### Key Accomplishments
+
+* **Finished porting elements from Project 2**
+
+---
+
+> **Next Steps:** Finish porting elements from Project 2
+
+
+# Scrum Meeting 3
+
+* **Date:** November 6, 2026
+* **Time:** 11:50 PM – 12:20 PM
+* **Attendees:** Kedar Panchal, Evan Chang, Vihal Arumalla
+
+---
+
+## Meeting Summary
+
+During this session, we went over what we accomplished over the past few days, what stopped us from progressing, and what we wanted to do in future days.
+
+### Key Accomplishments
+
+* **Started work on **
+
+---
+
+> **Next Steps:** Finish porting elements from Project 2
