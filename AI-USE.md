@@ -70,3 +70,8 @@
 ## 12. Meeting Minutes
 **Prompt: ** Format the meeting minutes to look nice in markdown.
 **Output: ** `sprint-materials/sprint1-meetings.md`
+
+## 13. Reorganize Backend
+**Prompt: ** Move all *Manager classes in the backend in the *backend packages to their own unified package called managers, and update imports accordingly.
+
+**Output: ** The result of commit ID `42c58f9`.
