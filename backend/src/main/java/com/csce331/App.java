@@ -5,6 +5,7 @@ import io.javalin.Javalin;
 import com.csce331.controllers.InventoryController;
 import com.csce331.controllers.MenuItemController;
 import com.csce331.controllers.CustomerMenuController;
+import com.csce331.controllers.AuthenticationController;
 
 /**
  * Application entry point.

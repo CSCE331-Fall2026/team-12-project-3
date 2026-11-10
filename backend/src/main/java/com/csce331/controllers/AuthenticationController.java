@@ -18,7 +18,7 @@ public class AuthenticationController {
     public static void getUserRoleByEmail(Context ctx) {
         try {
             EmailRequest request = ctx.bodyAsClass(EmailRequest.class);
-            Optional<UserRole> roleOpt = authManager.getUserRoleByEmail(email);
+            Optional<UserRole> roleOpt = authManager.getUserRoleByEmail(request.email());
             if (roleOpt.isPresent()) {
                 ctx.status(200).json(roleOpt.get());
             } else {
@@ -34,7 +34,7 @@ public class AuthenticationController {
     public static void getUserRoleById(Context ctx) {
         try {
             GoogleIdRequest request = ctx.bodyAsClass(GoogleIdRequest.class);
-            Optional<UserRole> roleOpt = authManager.getUserRoleById(googleId);
+            Optional<UserRole> roleOpt = authManager.getUserRoleById(request.googleId());
             if (roleOpt.isPresent()) {
                 ctx.status(200).json(roleOpt.get());
             } else {
