@@ -9,10 +9,10 @@ import java.sql.Statement;
  * shared JDBC connection.
  *
  * <p>Creating a connector opens a connection using the credentials in
- * {@code DatabaseSetup}. If the database cannot be reached, the error is logged
- * and the process exits, so a manager is never left with a dead connection.
- * Subclasses can get the open connection from {@link #getConnection()} when they
- * need prepared statements or transactions.
+ * the environment variables. If the database cannot be reached, the error is
+ * logged and the process exits, so a Manager is never left with a dead 
+ * connection. Subclasses can get the open connection from 
+ * {@link #getConnection()} when they need prepared statements or transactions.
  *
  * @author Kedar Panchal
  */
@@ -25,9 +25,12 @@ public abstract class DatabaseConnector {
      * <p>If the connection fails, the error is logged and the process exits.
      */
     public DatabaseConnector() {
+        String databaseURL = System.getenv("DATABASE_URL");
+        String databaseUser = System.getenv("DATABASE_USER");
+        String databasePassword = System.getenv("DATABASE_PASSWORD");
         try {
             this.connection = DriverManager.getConnection(
-                    DatabaseSetup.url, DatabaseSetup.user, DatabaseSetup.pswd);
+                    databaseURL, databaseUser, databasePassword);
         } catch (Exception e) {
             ExceptionLogger.logException(e);
             System.exit(0);
