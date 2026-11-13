@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.HashMap;
 
 import com.csce331.common.DatabaseConnector;
-import com.csce331.common.DatabaseSetup;
 import com.csce331.common.ExceptionLogger;
 
 import com.csce331.models.Ingredient;

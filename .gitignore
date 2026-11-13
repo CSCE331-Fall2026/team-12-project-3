@@ -9,7 +9,8 @@ target
 
 # Environment variables
 backend/src/main/java/com/csce331/common/DatabaseSetup.java
-.env*
+**/.env*
+!**/.env.example
 
 # Generated scripts
 db/orders.sql
