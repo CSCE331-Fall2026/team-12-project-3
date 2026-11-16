@@ -253,7 +253,7 @@ public class InventoryManager extends DatabaseConnector {
             Statement restockStatement = this.createStatement();
 
             String restockQuery = "UPDATE utensils "
-                + "SET quantity = current_amount + " + quantity + " "
+                + "SET quantity = quantity + " + quantity + " "
                 + "WHERE name = '" + itemName + "';";
             restockStatement.executeUpdate(restockQuery);
         } catch (SQLException e) {
