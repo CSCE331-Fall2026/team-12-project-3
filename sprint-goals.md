@@ -11,11 +11,13 @@ A user can create an account and choose whether they are a customer and manager.
 Managers can view a table of current inventory.
 ## Sprint 2
 **Goal:**
-Complete the basic functionality for both customers and managers.
+Complete the basic functionality for both customers and managers. The restocking interface should also be made more intuitive.
 
 **Outcome:**
 Customers can view menu items, create and edit and order, and make a "payment"
 Managers can view a restock report, a primitive prediction model, and a sales report.
+Managers can see the restock status, understand that restocking is additive, and can reliably restock items.
+The user interface should work on a variety of screen sizes, including mobile and desktop.
 ## Sprint 3
 **Goal:**
 Implement advanced functionality, such as predictive inventory counts, and translation feature
