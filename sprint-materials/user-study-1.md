@@ -78,5 +78,3 @@ much to restock.
 | 2 | Make the UI work on different screen sizes. | Participant B had a 16x10 screen, which resulted in empty bars on the sides of the screen. | Medium (UI redesign) |
 | 3 | Make the difference between the current quantity and restock threshold visible. | Participants A and C were calculating the difference between the current quantity and restock threshold to determine how much to restock. | Low (small UI change) |
 | 4 | Make it clearer that the restocking process is additive. | Participants A and C suggested that it be made clearer that the restocking process is additive. | Low (small UI change) |
-| 5 | Make the manager view label clearer after login. | Participant B noted that the manager view didn't label that it was for managers after login. | Low (small UI change) |
-| 6 | Reduce load times when switching between sections in the inventory. | Participant B was annoyed with the load times when switching between sections in the inventory. | High (performance optimization) |
