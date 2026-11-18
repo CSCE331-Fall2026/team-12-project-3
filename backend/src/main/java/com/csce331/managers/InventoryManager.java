@@ -421,4 +421,37 @@ public class InventoryManager extends DatabaseConnector {
 
         return restockReport;
     }
+
+    public Map<String, Integer> daysUntilRestock() throws SQLException {
+        Map<String, Integer> restockMap = new HashMap<>();
+
+        try {
+            Statement restockStatement = this.createStatement();
+            String restockQuery = "WITH last_week_ingredients AS ("
+                    + "SELECT i.id, SUM(mi.quantity * om.quantity) AS total_quantity "
+                    + "FROM ingredients AS i "
+                    + "JOIN orders AS o "
+                    + "ON o.order_date >= CURRENT_DATE - 7 "
+                    + "JOIN order_menu AS om "
+                    + "ON o.id = om.order_id "
+                    + "JOIN menu_items AS m "
+                    + "ON om.menu_item_id = m.id "
+                    + "JOIN menu_ingredients AS mi "
+                    + "ON m.id = mi.menu_item_id "
+                    + "WHERE i.id = mi.ingredient_id "
+                    + "GROUP BY i.id"
+                + ")"
+                + "SELECT i.name, COALESCE(SUM(inv.quantity), 0) AS total_quantity, COALESCE(lwi.total_quantity, 0) AS last_week_quantity, i.restock_threshold "
+                + "FROM ingredients AS i "
+                + "LEFT JOIN inventory AS inv "
+                + "ON i.id = inv.ingredient_id "
+                + "LEFT JOIN last_week_ingredients AS lwi "
+                + "ON i.id = lwi.id "
+                + "GROUP BY i.name, lwi.total_quantity, i.restock_threshold;"
+            ResultSet restockResultSet = restockStatement.executeQuery(restockQuery);
+        } catch (SQLException e) {
+            ExceptionLogger.logException(e);
+            throw e;
+        }
+    }
 }
