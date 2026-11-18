@@ -447,11 +447,28 @@ public class InventoryManager extends DatabaseConnector {
                 + "ON i.id = inv.ingredient_id "
                 + "LEFT JOIN last_week_ingredients AS lwi "
                 + "ON i.id = lwi.id "
-                + "GROUP BY i.name, lwi.total_quantity, i.restock_threshold;"
+                + "GROUP BY i.name, lwi.total_quantity, i.restock_threshold;";
             ResultSet restockResultSet = restockStatement.executeQuery(restockQuery);
+            while (restockResultSet.next()) {
+                // quantity - x * last_week_quantity / 7 = restock_threshold
+                String name = restockResultSet.getString("name");
+                int totalQuantity = restockResultSet.getInt("total_quantity");
+                int lastWeekQuantity = restockResultSet.getInt("last_week_quantity");
+                int restockThreshold = restockResultSet.getInt("restock_threshold");
+                if (lastWeekQuantity == 0) {
+                    restockMap.put(name, -1);
+                }
+                int daysUntilRestock = (int)Math.ceil((totalQuantity - restockThreshold) / (lastWeekQuantity / 7.0));
+                if (daysUntilRestock < 0) {
+                    restockMap.put(name, 0);
+                } else {
+                    restockMap.put(name, daysUntilRestock);
+                }
+            }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
             throw e;
         }
+        return restockMap;
     }
 }
