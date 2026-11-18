@@ -57,6 +57,9 @@ public class InventoryManager extends DatabaseConnector {
             case "pantry" -> {
                 return InventoryLocation.PANTRY;
             }
+            case "utensils" -> {
+                return InventoryLocation.UTENSILS;
+            }
             default -> throw new IllegalArgumentException(
                 "Invalid inventory type: " + inventoryType);
         }
