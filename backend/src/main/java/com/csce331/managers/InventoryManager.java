@@ -421,8 +421,9 @@ public class InventoryManager extends DatabaseConnector {
 
         return restockReport;
     }
-
-    public Map<String, Integer> daysUntilRestock() throws SQLException {
+    
+    // TODO: Make this filter by location
+    public Map<String, Integer> daysUntilRestock(InventoryLocation location) throws SQLException {
         Map<String, Integer> restockMap = new HashMap<>();
 
         try {
@@ -471,4 +472,6 @@ public class InventoryManager extends DatabaseConnector {
         }
         return restockMap;
     }
+
+    // TODO: Implement the above but for utensils
 }
