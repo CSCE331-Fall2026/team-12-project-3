@@ -88,3 +88,12 @@
 **Prompt: ** Add the necessary Swagger annotations to all of the endpoints in App describing them in accordance to the docstrings for the corresponding methods such that an API consumer knows how to use the API. Reference the Javalin OpenAPI plugin documentation online for reference: https://javalin.github.io/javalin-openapi/introduction/setup.html
 
 **Output: ** The result of commit ID `4d6cbf5`.
+
+## 16. Refactor frontend 
+
+**Prompt(s): ** 
+"Take a look at the files in the frontend/src directory. How could the those files be broken up to improve readability?"
+"clarifying prompts"
+
+**Output: ** The result of commit ID
+
