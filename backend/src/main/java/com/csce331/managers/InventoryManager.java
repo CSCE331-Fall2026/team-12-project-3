@@ -453,7 +453,7 @@ public class InventoryManager extends DatabaseConnector {
                 + "ON om.menu_item_id = m.id "
                 + "JOIN menu_ingredients AS mi "
                 + "ON m.id = mi.menu_item_id "
-                + "WHERE i.id = mi.ingredient_id "
+                + "AND i.id = mi.ingredient_id "
                 + "GROUP BY i.id"
             + ")"
             + "SELECT i.name, COALESCE(SUM(inv.quantity), 0) AS total_quantity, COALESCE(lwi.total_quantity, 0) AS last_week_quantity, i.restock_threshold "
@@ -489,8 +489,51 @@ public class InventoryManager extends DatabaseConnector {
             ExceptionLogger.logException(e);
             throw e;
         }
+
         return restockMap;
     }
 
     // TODO: Implement the above but for utensils
+    public Map<String, Integer> daysUntilRestockUtensils() throws SQLException {
+        Map<String, Integer> restockMap = new HashMap<>();
+
+        String restockQuery = "WITH last_week_utensils AS ("
+                + "SELECT u.id, SUM(ou.quantity) AS total_quantity "
+                + "FROM utensils AS u "
+                + "JOIN orders AS o "
+                + "ON o.order_date >= CURRENT_DATE - 7 "
+                + "JOIN order_utensils AS ou "
+                + "ON o.id = ou.order_id "
+                + "AND u.id = ou.utensil_id "
+                + "GROUP BY u.id"
+            + ")"
+            + "SELECT u.name, COALESCE(u.quantity, 0) AS total_quantity, COALESCE(lwu.total_quantity, 0) AS last_week_quantity, u.restock_threshold "
+            + "FROM utensils AS u "
+            + "LEFT JOIN last_week_utensils AS lwu "
+            + "ON u.id = lwu.id;";
+        
+        try (Statement restockStatement = this.createStatement()) {
+            ResultSet restockResultSet = restockStatement.executeQuery(restockQuery);
+            while (restockResultSet.next()) {
+                String name = restockResultSet.getString("name");
+                int totalQuantity = restockResultSet.getInt("total_quantity");
+                int lastWeekQuantity = restockResultSet.getInt("last_week_quantity");
+                int restockThreshold = restockResultSet.getInt("restock_threshold");
+                if (lastWeekQuantity == 0) {
+                    restockMap.put(name, -1);
+                }
+                int daysUntilRestock = (int)Math.ceil((totalQuantity - restockThreshold) / (lastWeekQuantity / 7.0));
+                if (daysUntilRestock < 0) {
+                    restockMap.put(name, 0);
+                } else {
+                    restockMap.put(name, daysUntilRestock);
+                }
+            }
+        } catch (SQLException e) {
+            ExceptionLogger.logException(e);
+            throw e;
+        }
+
+        return restockMap;
+    }
 }
