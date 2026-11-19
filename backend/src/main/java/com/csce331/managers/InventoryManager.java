@@ -493,7 +493,6 @@ public class InventoryManager extends DatabaseConnector {
         return restockMap;
     }
 
-    // TODO: Implement the above but for utensils
     public Map<String, Integer> daysUntilRestockUtensils() throws SQLException {
         Map<String, Integer> restockMap = new HashMap<>();
 
