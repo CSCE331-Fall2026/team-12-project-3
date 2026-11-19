@@ -3,6 +3,7 @@ package com.csce331.controllers;
 import java.sql.SQLException;
 
 import java.util.List;
+import java.util.Map;
 
 import io.javalin.http.Context;
 import io.javalin.openapi.HttpMethod;
@@ -378,6 +379,23 @@ public class InventoryController {
             ctx.status(200).json(report);
         } catch (SQLException e) {
             ctx.status(500).result("Error finding restock report: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).result(e.getMessage());
+        }
+    }
+
+    public static void predictiveRestocking(Context ctx) {
+        try {
+            LocationRequest request = ctx.bodyAsClass(LocationRequest.class);
+            if (request.location() == InventoryLocation.UTENSILS) {
+                Map<String, Integer> report = inventoryManager.daysUntilRestockUtensils();
+                ctx.status(200).json(report);
+                return;
+            }
+            Map<String, Integer> report = inventoryManager.daysUntilRestock(request.location());
+            ctx.status(200).json(report);
+        } catch (SQLException e) {
+            ctx.status(500).result("Error finding predictive restock report: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             ctx.status(400).result(e.getMessage());
         }
