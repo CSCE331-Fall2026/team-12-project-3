@@ -88,3 +88,9 @@
 **Prompt: ** Add the necessary Swagger annotations to all of the endpoints in App describing them in accordance to the docstrings for the corresponding methods such that an API consumer knows how to use the API. Reference the Javalin OpenAPI plugin documentation online for reference: https://javalin.github.io/javalin-openapi/introduction/setup.html
 
 **Output: ** The result of commit ID `4d6cbf5`.
+
+## 16. String Substitution Refactor
+
+**Prompt: ** Refactor the *Manager classes in the backend to use string substitution (using JDBC's inbuilt functionality for statements to do this) instead of string concatenation.
+
+**Output: ** The result of commit ID `7820cf6`.
