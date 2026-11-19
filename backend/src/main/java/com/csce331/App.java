@@ -64,7 +64,7 @@ public class App {
             config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> {
                 rule.allowHost(
                     "http://localhost:5173", // Vite dev server
-                    "http://team-12-project-3-*.vercel.app" // Vercel deployments
+                    "http://team-12-project-3-one.vercel.app" // Vercel deployment
                 );
             }));
 
