@@ -97,13 +97,12 @@ public class InventoryManager extends DatabaseConnector {
     public List<Ingredient> getIngredients() throws SQLException {
         ArrayList<Ingredient> allIngredients = new ArrayList<>();
 
-        try {
-            Statement ingredientStatement = this.createStatement();
-            String ingredientQuery = "SELECT i.name, i.inventory_type, i.unit, i.shelf_life, "
-                + "i.restock_threshold, COALESCE(SUM(inv.quantity), 0) AS quantity "
-                + "FROM ingredients AS i "
-                + "LEFT JOIN inventory AS inv ON inv.ingredient_id = i.id "
-                + "GROUP BY i.id, i.name, i.inventory_type, i.unit, i.shelf_life, i.restock_threshold;";
+        String ingredientQuery = "SELECT i.name, i.inventory_type, i.unit, i.shelf_life, "
+            + "i.restock_threshold, COALESCE(SUM(inv.quantity), 0) AS quantity "
+            + "FROM ingredients AS i "
+            + "LEFT JOIN inventory AS inv ON inv.ingredient_id = i.id "
+            + "GROUP BY i.id, i.name, i.inventory_type, i.unit, i.shelf_life, i.restock_threshold;";
+        try (Statement ingredientStatement = this.createStatement()) {
             ResultSet ingredientResultSet = ingredientStatement.executeQuery(ingredientQuery);
 
             while (ingredientResultSet.next()) {
@@ -143,14 +142,15 @@ public class InventoryManager extends DatabaseConnector {
 
         ArrayList<Ingredient> ingredientsInLocation = new ArrayList<>();
 
-        try {
-            String ingredientQuery = "SELECT i.name, i.unit, i.shelf_life, i.restock_threshold, "
-                + "COALESCE(SUM(inv.quantity), 0) AS quantity "
-                + "FROM ingredients AS i "
-                + "LEFT JOIN inventory AS inv ON inv.ingredient_id = i.id "
-                + "WHERE i.inventory_type = ?::inventory_location "
-                + "GROUP BY i.id, i.name, i.unit, i.shelf_life, i.restock_threshold;";
-            PreparedStatement ingredientStatement = this.getConnection().prepareStatement(ingredientQuery);
+        String ingredientQuery = "SELECT i.name, i.unit, i.shelf_life, i.restock_threshold, "
+            + "COALESCE(SUM(inv.quantity), 0) AS quantity "
+            + "FROM ingredients AS i "
+            + "LEFT JOIN inventory AS inv ON inv.ingredient_id = i.id "
+            + "WHERE i.inventory_type = ?::inventory_location "
+            + "GROUP BY i.id, i.name, i.unit, i.shelf_life, i.restock_threshold;";
+
+        try (PreparedStatement ingredientStatement 
+                = this.getConnection().prepareStatement(ingredientQuery)) {
             ingredientStatement.setString(1, location.name().toLowerCase());
             ResultSet ingredientResultSet = ingredientStatement.executeQuery();
 
@@ -184,9 +184,9 @@ public class InventoryManager extends DatabaseConnector {
     public List<Utensil> getUtensils() throws SQLException {
         ArrayList<Utensil> allUtensils = new ArrayList<>();
 
-        try {
-            Statement utensilStatement = this.createStatement();
-            String utensilQuery = "SELECT * FROM utensils;";
+        String utensilQuery = "SELECT * FROM utensils;";
+
+        try (Statement utensilStatement = this.createStatement()) {
             ResultSet utensilResultSet = utensilStatement.executeQuery(utensilQuery);
 
             while (utensilResultSet.next()) {
@@ -328,12 +328,13 @@ public class InventoryManager extends DatabaseConnector {
      */
     public int endDay() throws SQLException {
         int deletionCount = 0;
-        try {
-            Statement deleteStatement = this.createStatement();
-            String deleteQuery = "DELETE FROM inventory "
-                + "USING ingredients "
-                + "WHERE inventory.ingredient_id = ingredients.id "
-                + "AND (inventory.restock_date + ingredients.shelf_life) < CURRENT_DATE;";
+        
+        String deleteQuery = "DELETE FROM inventory "
+            + "USING ingredients "
+            + "WHERE inventory.ingredient_id = ingredients.id "
+            + "AND (inventory.restock_date + ingredients.shelf_life) < CURRENT_DATE;";
+
+        try (Statement deleteStatement = this.createStatement()) {
             deletionCount = deleteStatement.executeUpdate(deleteQuery);
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
@@ -413,11 +414,10 @@ public class InventoryManager extends DatabaseConnector {
     public List<Utensil> utensilRestockReport() throws SQLException {
         List<Utensil> restockReport = new ArrayList<>();
 
-        try {
-            Statement restockStatement = this.createStatement();
-            String restockQuery = "SELECT name, quantity, restock_threshold from utensils "
-                + "WHERE quantity <= restock_threshold;";
+        String restockQuery = "SELECT name, quantity, restock_threshold from utensils "
+            + "WHERE quantity <= restock_threshold;";
 
+        try (Statement restockStatement = this.createStatement()) {
             ResultSet restockResultSet = restockStatement.executeQuery(restockQuery);
             while (restockResultSet.next()) {
                 String name = restockResultSet.getString("name");
@@ -439,33 +439,35 @@ public class InventoryManager extends DatabaseConnector {
         return restockReport;
     }
     
-    // TODO: Make this filter by location
     public Map<String, Integer> daysUntilRestock(InventoryLocation location) throws SQLException {
         Map<String, Integer> restockMap = new HashMap<>();
 
-        try {
-            Statement restockStatement = this.createStatement();
-            String restockQuery = "WITH last_week_ingredients AS ("
-                    + "SELECT i.id, SUM(mi.quantity * om.quantity) AS total_quantity "
-                    + "FROM ingredients AS i "
-                    + "JOIN orders AS o "
-                    + "ON o.order_date >= CURRENT_DATE - 7 "
-                    + "JOIN order_menu AS om "
-                    + "ON o.id = om.order_id "
-                    + "JOIN menu_items AS m "
-                    + "ON om.menu_item_id = m.id "
-                    + "JOIN menu_ingredients AS mi "
-                    + "ON m.id = mi.menu_item_id "
-                    + "WHERE i.id = mi.ingredient_id "
-                    + "GROUP BY i.id"
-                + ")"
-                + "SELECT i.name, COALESCE(SUM(inv.quantity), 0) AS total_quantity, COALESCE(lwi.total_quantity, 0) AS last_week_quantity, i.restock_threshold "
+        String restockQuery = "WITH last_week_ingredients AS ("
+                + "SELECT i.id, SUM(mi.quantity * om.quantity) AS total_quantity "
                 + "FROM ingredients AS i "
-                + "LEFT JOIN inventory AS inv "
-                + "ON i.id = inv.ingredient_id "
-                + "LEFT JOIN last_week_ingredients AS lwi "
-                + "ON i.id = lwi.id "
-                + "GROUP BY i.name, lwi.total_quantity, i.restock_threshold;";
+                + "JOIN orders AS o "
+                + "ON o.order_date >= CURRENT_DATE - 7 "
+                + "JOIN order_menu AS om "
+                + "ON o.id = om.order_id "
+                + "JOIN menu_items AS m "
+                + "ON om.menu_item_id = m.id "
+                + "JOIN menu_ingredients AS mi "
+                + "ON m.id = mi.menu_item_id "
+                + "WHERE i.id = mi.ingredient_id "
+                + "GROUP BY i.id"
+            + ")"
+            + "SELECT i.name, COALESCE(SUM(inv.quantity), 0) AS total_quantity, COALESCE(lwi.total_quantity, 0) AS last_week_quantity, i.restock_threshold "
+            + "FROM ingredients AS i "
+            + "LEFT JOIN inventory AS inv "
+            + "ON i.id = inv.ingredient_id "
+            + "LEFT JOIN last_week_ingredients AS lwi "
+            + "ON i.id = lwi.id "
+            + "WHERE i.inventory_type = ?::inventory_location "
+            + "GROUP BY i.name, lwi.total_quantity, i.restock_threshold;";
+
+        try (PreparedStatement restockStatement = 
+                this.getConnection().prepareStatement(restockQuery)) {
+            restockStatement.setString(1, location.toString().toLowerCase());
             ResultSet restockResultSet = restockStatement.executeQuery(restockQuery);
             while (restockResultSet.next()) {
                 // quantity - x * last_week_quantity / 7 = restock_threshold
