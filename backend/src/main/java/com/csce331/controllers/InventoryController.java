@@ -3,6 +3,7 @@ package com.csce331.controllers;
 import java.sql.SQLException;
 
 import java.util.List;
+import java.util.Map;
 
 import io.javalin.http.Context;
 import io.javalin.openapi.HttpMethod;
@@ -378,6 +379,74 @@ public class InventoryController {
             ctx.status(200).json(report);
         } catch (SQLException e) {
             ctx.status(500).result("Error finding restock report: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).result(e.getMessage());
+        }
+    }
+
+    /**
+     * Responds with the number of days until each item in the location named
+     * in the request body reaches its restock threshold, or with the utensil
+     * projections when the location is "utensils".
+     *
+     * <p>Days are estimated from each item's average use over the past week.
+     * Items with no use in the past week are reported as -1, and items already
+     * at or below their threshold are reported as 0. Responds 400 for an
+     * unknown location and 500 if the database query fails.
+     *
+     * @param ctx the request context
+     */
+    @OpenApi(
+        path = "/manager/predictiverestocking",
+        methods = HttpMethod.POST,
+        operationId = "getPredictiveRestockReport",
+        summary = "Predict when items will need restocking",
+        description = "Returns, for every item in the requested location, the "
+            + "number of days until it reaches its restock threshold, estimated "
+            + "from its average use over the past week. A location of UTENSILS "
+            + "returns the utensil projections instead. Items with no use in the "
+            + "past week are reported as -1, and items already at or below their "
+            + "threshold are reported as 0. Responds with 400 for an unknown "
+            + "location and 500 if the database query fails.",
+        tags = {"Inventory"},
+        requestBody = @OpenApiRequestBody(
+            description = "The storage location to project. Use UTENSILS for "
+                + "the utensil projections.",
+            required = true,
+            content = @OpenApiContent(from = LocationRequest.class)
+        ),
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "Days until restock keyed by item name, with -1 for "
+                    + "items that had no use in the past week and 0 for items "
+                    + "already at or below their threshold.",
+                content = @OpenApiContent(from = Map.class)
+            ),
+            @OpenApiResponse(
+                status = "400",
+                description = "The location is missing or unknown.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            ),
+            @OpenApiResponse(
+                status = "500",
+                description = "The database query failed.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            )
+        }
+    )
+    public static void predictiveRestocking(Context ctx) {
+        try {
+            LocationRequest request = ctx.bodyAsClass(LocationRequest.class);
+            if (request.location() == InventoryLocation.UTENSILS) {
+                Map<String, Integer> report = inventoryManager.daysUntilRestockUtensils();
+                ctx.status(200).json(report);
+                return;
+            }
+            Map<String, Integer> report = inventoryManager.daysUntilRestock(request.location());
+            ctx.status(200).json(report);
+        } catch (SQLException e) {
+            ctx.status(500).result("Error finding predictive restock report: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             ctx.status(400).result(e.getMessage());
         }

@@ -88,3 +88,15 @@
 **Prompt: ** Add the necessary Swagger annotations to all of the endpoints in App describing them in accordance to the docstrings for the corresponding methods such that an API consumer knows how to use the API. Reference the Javalin OpenAPI plugin documentation online for reference: https://javalin.github.io/javalin-openapi/introduction/setup.html
 
 **Output: ** The result of commit ID `4d6cbf5`.
+
+## 16. String Substitution Refactor
+
+**Prompt: ** Refactor the *Manager classes in the backend to use string substitution (using JDBC's inbuilt functionality for statements to do this) instead of string concatenation.
+
+**Output: ** The result of commit ID `7820cf6`.
+
+## 17. Further OpenAPI Documentation
+
+**Prompt: ** Add swagger documentation for the undocumented endpoint in InventoryController in the backend. Format the documentation just like the other endpoint documentation.
+
+**Output: ** The result of commit ID `a8e436a`.

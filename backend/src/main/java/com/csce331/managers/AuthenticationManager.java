@@ -1,6 +1,6 @@
 package com.csce331.managers;
 
-import java.sql.Statement;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -32,15 +32,19 @@ public class AuthenticationManager extends DatabaseConnector {
      * @throws SQLException if the database query fails
      */
     public Optional<UserRole> getUserRoleByEmail(String email) throws SQLException {
-        try {
-            Statement emailStatement = this.createStatement();
-            String query = "SELECT role FROM accounts WHERE email = '" + email + "' LIMIT 1";
-            ResultSet resultSet = emailStatement.executeQuery(query);
-            if (resultSet.next()) {
-                String roleString = resultSet.getString("role");
-                return Optional.of(UserRole.fromString(roleString));
-            } else {
-                return Optional.empty();
+        String query = "SELECT role FROM accounts WHERE email = ? LIMIT 1";
+
+        try (PreparedStatement emailStatement =
+                this.getConnection().prepareStatement(query)) {
+            emailStatement.setString(1, email);
+
+            try (ResultSet resultSet = emailStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    String roleString = resultSet.getString("role");
+                    return Optional.of(UserRole.fromString(roleString));
+                } else {
+                    return Optional.empty();
+                }
             }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
@@ -56,15 +60,19 @@ public class AuthenticationManager extends DatabaseConnector {
      * @throws SQLException if the database query fails
      */
     public Optional<UserRole> getUserRoleById(String googleId) throws SQLException {
-        try {
-            Statement idStatement = this.createStatement();
-            String query = "SELECT role FROM accounts WHERE id = " + googleId + " LIMIT 1";
-            ResultSet resultSet = idStatement.executeQuery(query);
-            if (resultSet.next()) {
-                String roleString = resultSet.getString("role");
-                return Optional.of(UserRole.fromString(roleString));
-            } else {
-                return Optional.empty();
+        String query = "SELECT role FROM accounts WHERE id = ?::integer LIMIT 1";
+
+        try (PreparedStatement idStatement =
+                this.getConnection().prepareStatement(query)) {
+            idStatement.setString(1, googleId);
+
+            try (ResultSet resultSet = idStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    String roleString = resultSet.getString("role");
+                    return Optional.of(UserRole.fromString(roleString));
+                } else {
+                    return Optional.empty();
+                }
             }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
@@ -82,11 +90,15 @@ public class AuthenticationManager extends DatabaseConnector {
      * @throws SQLException if the database update fails
      */
     public void createUser(String email, UserRole role, String googleId) throws SQLException {
-        try {
-            Statement createStatement = this.createStatement();
-            String query = "INSERT INTO accounts (email, role, google_id) VALUES " +
-                "('" + email + "', '" + role.toString() + "', '" + googleId + "')";
-            createStatement.executeUpdate(query);
+        String query = "INSERT INTO accounts (email, role, google_id) VALUES " +
+            "(?, ?::user_role, ?)";
+
+        try (PreparedStatement createUserStatement =
+                this.getConnection().prepareStatement(query)) {
+            createUserStatement.setString(1, email);
+            createUserStatement.setString(2, role.toString());
+            createUserStatement.setString(3, googleId);
+            createUserStatement.executeUpdate();
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
             throw e;
