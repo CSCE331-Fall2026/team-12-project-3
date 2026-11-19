@@ -94,3 +94,9 @@
 **Prompt: ** Refactor the *Manager classes in the backend to use string substitution (using JDBC's inbuilt functionality for statements to do this) instead of string concatenation.
 
 **Output: ** The result of commit ID `7820cf6`.
+
+## 17. Further OpenAPI Documentation
+
+**Prompt: ** Add swagger documentation for the undocumented endpoint in InventoryController in the backend. Format the documentation just like the other endpoint documentation.
+
+**Output: ** The result of commit ID `a8e436a`.
