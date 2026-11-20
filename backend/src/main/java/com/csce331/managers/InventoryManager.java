@@ -439,6 +439,19 @@ public class InventoryManager extends DatabaseConnector {
         return restockReport;
     }
     
+    /**
+     * Estimates how many days each ingredient in the given location will last
+     * before its stock reaches the restock threshold, based on the quantity
+     * used in orders over the past seven days.
+     *
+     * <p>An ingredient already at or below its threshold is reported as 0. An
+     * ingredient with no use in the past week has no measurable usage rate, so
+     * its estimate is not meaningful.
+     *
+     * @param location the inventory location to project
+     * @return the estimated days until restock, keyed by ingredient name
+     * @throws SQLException if the database query fails
+     */
     public Map<String, Integer> daysUntilRestock(InventoryLocation location) throws SQLException {
         Map<String, Integer> restockMap = new HashMap<>();
 
@@ -493,6 +506,18 @@ public class InventoryManager extends DatabaseConnector {
         return restockMap;
     }
 
+    /**
+     * Estimates how many days each utensil will last before its stock reaches
+     * the restock threshold, based on the quantity used in orders over the past
+     * seven days.
+     *
+     * <p>A utensil already at or below its threshold is reported as 0. A
+     * utensil with no use in the past week has no measurable usage rate, so its
+     * estimate is not meaningful.
+     *
+     * @return the estimated days until restock, keyed by utensil name
+     * @throws SQLException if the database query fails
+     */
     public Map<String, Integer> daysUntilRestockUtensils() throws SQLException {
         Map<String, Integer> restockMap = new HashMap<>();
 

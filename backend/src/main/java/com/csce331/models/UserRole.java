@@ -12,6 +12,11 @@ public enum UserRole {
 
     private final String displayName;
 
+    /**
+     * Creates a role with the given display name.
+     *
+     * @param displayName the name used in the database and in displays
+     */
     private UserRole(String displayName) {
         this.displayName = displayName;
     }
