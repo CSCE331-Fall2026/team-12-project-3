@@ -490,6 +490,7 @@ public class InventoryManager extends DatabaseConnector {
                 int restockThreshold = restockResultSet.getInt("restock_threshold");
                 if (lastWeekQuantity == 0) {
                     restockMap.put(name, -1);
+                    continue;
                 }
                 int daysUntilRestock = (int)Math.ceil((totalQuantity - restockThreshold) / (lastWeekQuantity / 7.0));
                 if (daysUntilRestock < 0) {
@@ -545,6 +546,7 @@ public class InventoryManager extends DatabaseConnector {
                 int restockThreshold = restockResultSet.getInt("restock_threshold");
                 if (lastWeekQuantity == 0) {
                     restockMap.put(name, -1);
+                    continue;
                 }
                 int daysUntilRestock = (int)Math.ceil((totalQuantity - restockThreshold) / (lastWeekQuantity / 7.0));
                 if (daysUntilRestock < 0) {
