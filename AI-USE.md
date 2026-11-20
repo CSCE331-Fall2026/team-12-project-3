@@ -100,3 +100,9 @@
 **Prompt: ** Add swagger documentation for the undocumented endpoint in InventoryController in the backend. Format the documentation just like the other endpoint documentation.
 
 **Output: ** The result of commit ID `a8e436a`.
+
+## 18. Update Documentation
+
+**Prompt: ** Update the documentation to reflect the changes made in the backend. Ensure that the documentation is accurate and up to date.
+
+**Output: ** The result of commit ID `cfd350c`.
