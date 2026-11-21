@@ -57,7 +57,7 @@ export default function CheckoutScreen({ lines, subtotal, submitting, error, onB
           <div className="customer-payment-heading">Payment method</div>
           <label className={`customer-payment-choice ${method === 'CREDIT_CARD' ? 'selected' : ''}`}><input type="radio" name="payment" checked={method === 'CREDIT_CARD'} onChange={() => setMethod('CREDIT_CARD')} /><span><b>Credit or debit card</b><small>•••• &nbsp;4242</small></span></label>
           <label className={`customer-payment-choice ${method === 'DINING_DOLLARS' ? 'selected' : ''}`}><input type="radio" name="payment" checked={method === 'DINING_DOLLARS'} onChange={() => setMethod('DINING_DOLLARS')} /><span><b>Dining dollars</b><small>Campus account</small></span></label>
-          {error && <p className="error-message" role="alert">{error}</p>}
+          {error && <p className="customer-action-error" role="alert">{error}</p>}
           <button className="customer-primary-button customer-place-button" type="button" disabled={submitting} onClick={() => onPlaceOrder(tip, method)}>{submitting ? 'Placing order…' : `Place order · ${currency(total)}`}</button>
           <button className="customer-back-button" type="button" onClick={onBack}>← Back to menu</button>
         </section>
