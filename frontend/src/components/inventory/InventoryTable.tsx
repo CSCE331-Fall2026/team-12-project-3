@@ -46,7 +46,7 @@ export default function InventoryTable({
                     <button className="small-action cancel-action" type="button" disabled={restocking} onClick={onCancel}>Cancel</button>
                   </form>
                 ) : (
-                  <button className="edit-action" type="button" onClick={() => onEdit(item.name)}>Edit</button>
+                  <button className="edit-action" type="button" onClick={() => onEdit(item.name)}>Add</button>
                 )}
               </div>
             </td>
