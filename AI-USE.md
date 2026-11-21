@@ -106,3 +106,12 @@
 **Prompt: ** Update the documentation to reflect the changes made in the backend. Ensure that the documentation is accurate and up to date.
 
 **Output: ** The result of commit ID `cfd350c`.
+
+## 19. Refactor frontend 
+
+**Prompt(s): ** 
+"Take a look at the files in the frontend/src directory. How could the those files be broken up to improve readability?"
+"clarifying prompts"
+
+**Output: ** The result of commit ID
+
