@@ -14,13 +14,9 @@ import java.util.Map;
  *
  * <p>Example usage:
  * <pre>{@code
- * OrderManager om = new OrderManager();
- * for (Order o : om.getOrders(LocalDate.of(2026, 10, 16), 14)) {
- *     System.out.println(o.getName() + " " + o.getDate() + " " + o.getTime());
- *     for (MenuItem m : o.getItems()) {
- *         System.out.println("  " + m.getName() + " $" + m.getPrice());
- *     }
- * }
+ * Order order = new Order(12, LocalDate.of(2026, 10, 16), LocalTime.of(12, 30), 12.5);
+ * order.addItem(menuItem, 2);
+ * System.out.println(order.getName() + " " + order.getDate() + " " + order.getTime());
  * }</pre>
  */
 public class Order {
