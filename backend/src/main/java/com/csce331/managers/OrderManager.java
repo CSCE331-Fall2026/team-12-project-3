@@ -26,7 +26,7 @@ import com.csce331.models.Order;
 import com.csce331.models.PaymentMethod;
 
 /**
- * Handles cashier operations: browsing the menu and placing customer orders.
+ * Handles customer ordering: browsing the menu and placing orders.
  *
  * <p>The manager keeps no order state of its own. Each method reads from or
  * writes to the database and returns the result, so the current order lives
