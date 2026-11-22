@@ -8,11 +8,11 @@ import com.csce331.models.PaymentMethod;
 /**
  * Request body for placing a customer order.
  *
- * @param items the ordered menu items and their quantities
+ * @param items the ordered menu item IDs and their quantities
  * @param method the payment method used at checkout
  * @param price the total price of the order
  */
-public record OrderRequest(Map<MenuItem, Integer> items, PaymentMethod method, double price) {
+public record OrderRequest(Map<Integer, Integer> items, PaymentMethod method, double price) {
     /**
      * Creates the request, rejecting an empty order, a missing payment method,
      * and a negative price.

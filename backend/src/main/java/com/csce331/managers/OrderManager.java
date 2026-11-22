@@ -140,14 +140,14 @@ public class OrderManager extends DatabaseConnector {
      * <p>The total is stored as given; the manager does not recompute it from the
      * item prices.
      *
-     * @param items      the ordered menu items and their quantities
+     * @param items      the ordered menu item IDs and their quantities
      * @param method     the payment method used at checkout
      * @param totalPrice the total to store for the order
      * @return the new order's database identifier, or -1 if the order is empty
      * @throws SQLException if the order cannot be saved; the transaction is
      *         rolled back first
      */
-    public int order(Map<MenuItem, Integer> items, PaymentMethod method, double totalPrice)
+    public int order(Map<Integer, Integer> items, PaymentMethod method, double totalPrice)
             throws SQLException {
         if (items == null || items.isEmpty()) {
             return -1; // Don't process empty orders
@@ -185,9 +185,9 @@ public class OrderManager extends DatabaseConnector {
 
             try (PreparedStatement lineItemStatement =
                     conn.prepareStatement(insertOrderMenuSQL)) {
-                for (Map.Entry<MenuItem, Integer> entry : items.entrySet()) {
+                for (Map.Entry<Integer, Integer> entry : items.entrySet()) {
                     lineItemStatement.setInt(1, generatedOrderId);
-                    lineItemStatement.setInt(2, entry.getKey().getId());
+                    lineItemStatement.setInt(2, entry.getKey());
                     lineItemStatement.setInt(3, entry.getValue());
                     lineItemStatement.addBatch();
                 }
