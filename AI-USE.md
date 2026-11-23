@@ -135,3 +135,8 @@ have dummy images for each of the menu items
 Page 2: Checkout - view their total order, select their tip amount, and choose payment method (Card, dining dollars)
 
 **Output: ** The result of commit ID .
+
+## 22. Style Guide Fixes
+
+**Prompt:** Change the frontend style guide from a UI style guide to a code one, and then ensure that the frontend code adheres to the style guide.
+**Output:** The result of commit ID `7a7734d`.
