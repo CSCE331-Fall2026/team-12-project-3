@@ -153,3 +153,7 @@ Create a ReadMe file that explains how the general design flow of the frontend
 
 **Output:** The result of commit ID `70f8337`.
 
+## 24. Create Changelog
+
+**Prompt:** Edit CHANGELOG.md into two sections. The first should summarize the changes and commits made (in a bulleted list, only covering the main features/highlights) up to the sprint 1 tag. The second should do the same up to the sprint 2 tag.
+**Output:** The result of commit ID `9ab939`.
