@@ -1,3 +1,6 @@
+import { useState } from 'react'
+
+import SalesReport from '../components/SalesReport'
 import CategoryTabs from '../components/inventory/CategoryTabs'
 import InventoryTable from '../components/inventory/InventoryTable'
 import { useInventory } from '../hooks/useInventory'
@@ -7,6 +10,7 @@ import type { GoogleProfile, InventoryItem } from '../types'
 type ManagerScreenProps = { profile: GoogleProfile | null }
 
 export default function ManagerScreen({ profile }: ManagerScreenProps) {
+  const [view, setView] = useState<'inventory' | 'sales'>('inventory')
   const inventory = useInventory()
   const categoryLabel = inventoryCategories.find((entry) => entry.id === inventory.category)?.label
 
@@ -31,14 +35,34 @@ export default function ManagerScreen({ profile }: ManagerScreenProps) {
       <div className="manager-heading">
         <div>
           <div className="eyebrow">Panda Express</div>
-          <h1>What's in stock</h1>
-          <p className="muted">Keep every wok ready for the next order.</p>
+          <h1>{view === 'inventory' ? "What's in stock" : 'Sales report'}</h1>
+          <p className="muted">Manage your store and track sales performance.</p>
         </div>
         <div className="manager-user">
           <span className="avatar">{profile?.email.slice(0, 1).toUpperCase()}</span>
           <span>{profile?.email}</span>
         </div>
       </div>
+      <nav className="manager-navigation" aria-label="Manager sections">
+        <button
+          className={view === 'inventory' ? 'manager-navigation-active' : ''}
+          type="button"
+          aria-current={view === 'inventory' ? 'page' : undefined}
+          onClick={() => setView('inventory')}
+        >
+          Inventory
+        </button>
+        <button
+          className={view === 'sales' ? 'manager-navigation-active' : ''}
+          type="button"
+          aria-current={view === 'sales' ? 'page' : undefined}
+          onClick={() => setView('sales')}
+        >
+          Sales report
+        </button>
+      </nav>
+      {view === 'inventory' ? (
+      <>
       <section className="inventory-section">
         <div className="inventory-header">
           <div>
@@ -65,6 +89,8 @@ export default function ManagerScreen({ profile }: ManagerScreenProps) {
         )}
       </section>
       <p className="manager-foot">Anything marked Restock needs more.</p>
+      </>
+      ) : <SalesReport />}
     </main>
   )
 }

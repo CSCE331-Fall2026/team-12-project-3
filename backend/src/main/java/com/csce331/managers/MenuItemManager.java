@@ -199,19 +199,6 @@ public class MenuItemManager extends DatabaseConnector {
                 "GROUP BY mi.name, o.order_date;";
 
         try (PreparedStatement salesStatement = this.getConnection().prepareStatement(salesQuery)) {
-            "SELECT mi.name, o.order_date AS sale_date, " +
-            "SUM(om.quantity * mi.price) AS total_sales " +
-            "FROM order_menu AS om " +
-            "JOIN orders AS o " +
-            "ON om.order_id = o.id " +
-            "JOIN menu_items AS mi " +
-            "ON om.menu_item_id = mi.id " +
-            "WHERE o.order_date BETWEEN ? AND ? " +
-            "AND o.order_time BETWEEN ? AND ? " +
-            "GROUP BY mi.name, o.order_date;";
-
-        try (PreparedStatement salesStatement =
-                this.getConnection().prepareStatement(salesQuery)) {
             salesStatement.setDate(1, Date.valueOf(sqlStartDate));
             salesStatement.setDate(2, Date.valueOf(sqlEndDate));
             salesStatement.setTime(3, Time.valueOf(sqlStartTime));
