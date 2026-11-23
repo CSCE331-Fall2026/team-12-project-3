@@ -3,6 +3,14 @@
 This project is a web-based frontend for Panda Express that supports manager 
 reports and a kiosk-style ordering system for customers.
 
+## Manager sales report
+
+Managers can open the **Sales report** section to select a start and end date,
+view a labeled daily revenue trend, and compare the highest-revenue menu items.
+The report loads its data from the backend for the selected date range. The
+inventory view also estimates ingredient restock timing from the previous
+seven days of usage.
+
 ## Roles
 
 Frontend: Evan Chang  

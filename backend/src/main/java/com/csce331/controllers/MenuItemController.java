@@ -4,8 +4,11 @@ import java.sql.SQLException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.DateTimeException;
 
 import io.javalin.http.Context;
 import io.javalin.openapi.HttpMethod;
@@ -226,7 +229,7 @@ public class MenuItemController {
      */
     @OpenApi(
         path = "/manager/salesreport",
-        methods = HttpMethod.GET,
+        methods = HttpMethod.POST,
         operationId = "getSalesReport",
         summary = "Get revenue by menu item and sale date",
         description = "Returns the revenue each menu item earned, grouped by "
@@ -266,8 +269,20 @@ public class MenuItemController {
     public static void salesReport(Context ctx) {
         try {
             DateRangeRequest dates = ctx.bodyAsClass(DateRangeRequest.class);
-            Map<LocalDate, Map<String, Double>> salesReport = menuItemManager.salesReport(dates.start(), dates.end());
-            ctx.status(200).json(salesReport);
+            LocalDateTime start = LocalDateTime.parse(dates.start());
+            LocalDateTime end = LocalDateTime.parse(dates.end());
+            if (start.isAfter(end)) {
+                ctx.status(400).result("Start date must be before end date");
+                return;
+            }
+            Map<LocalDate, Map<String, Double>> salesReport = menuItemManager.salesReport(start, end);
+            Map<String, Map<String, Double>> jsonReport = new HashMap<>();
+            salesReport.forEach((date, items) -> jsonReport.put(date.toString(), items));
+            ctx.status(200).json(jsonReport);
+        } catch (DateTimeException e) {
+            ctx.status(400).result("Dates must use ISO-8601 date-time format");
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).result(e.getMessage());
         } catch (SQLException e) {
             ctx.status(500).result("Database query failed: " + e.getMessage());
         }

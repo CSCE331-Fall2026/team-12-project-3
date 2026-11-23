@@ -2,6 +2,7 @@ package com.csce331.managers;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+
 import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -179,6 +180,10 @@ public class InventoryManager extends DatabaseConnector {
     }
 
     /**
+     * Estimates the days until ingredients reach their restock thresholds,
+     * using average usage over the last seven calendar days.
+     *
+     * @param location the ingredient storage location
      * Estimates when each ingredient in a location will reach its restock
      * threshold, based on ingredient usage in orders from the last seven
      * calendar days.
@@ -224,6 +229,12 @@ public class InventoryManager extends DatabaseConnector {
                     BigDecimal averageDailyUsage =
                             weeklyUsage.divide(BigDecimal.valueOf(7), 6, RoundingMode.HALF_UP);
                     BigDecimal remainingToThreshold = resultSet.getBigDecimal("on_hand")
+                            .subtract(BigDecimal.valueOf(resultSet.getInt("restock_threshold")));
+                    Long daysUntilThreshold = remainingToThreshold.signum() <= 0 ? 0L : null;
+                    if (weeklyUsage.signum() > 0 && remainingToThreshold.signum() > 0) {
+                        daysUntilThreshold = remainingToThreshold.multiply(BigDecimal.valueOf(7))
+                                .divide(weeklyUsage, 0, RoundingMode.CEILING)
+                                .longValueExact();
                             .subtract(BigDecimal.valueOf(
                                     resultSet.getInt("restock_threshold")));
                     Long daysUntilThreshold = remainingToThreshold.signum() <= 0 ? 0L : null;

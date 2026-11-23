@@ -25,14 +25,29 @@ public class IngredientForecast {
         this.daysUntilThreshold = daysUntilThreshold;
     }
 
+    /**
+     * Returns the ingredient name.
+     *
+     * @return the ingredient name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Returns the recent average usage per day.
+     *
+     * @return average usage per day
+     */
     public BigDecimal getAverageDailyUsage() {
         return averageDailyUsage;
     }
 
+    /**
+     * Returns the estimated days until the restock threshold.
+     *
+     * @return estimated days, or {@code null} if there has been no recent usage
+     */
     public Long getDaysUntilThreshold() {
         return daysUntilThreshold;
     }

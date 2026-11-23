@@ -96,6 +96,7 @@ public class App {
             config.routes.patch("/manager/menuitems/price", MenuItemController::updatePrice);
             config.routes.patch("/manager/menuitems/discontinue", MenuItemController::discontinueMenuItem);
             config.routes.get("/manager/salesreport", MenuItemController::salesReport);
+            config.routes.post("/manager/salesreport", MenuItemController::salesReport);
 
             config.routes.get("/customer/menuitems", CustomerMenuController::popularItems);
             config.routes.post("/customer/menuitems", CustomerMenuController::menuItemByCategory);

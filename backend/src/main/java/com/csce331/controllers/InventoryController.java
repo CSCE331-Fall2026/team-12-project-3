@@ -146,6 +146,7 @@ public class InventoryController {
      * Responds with recent ingredient usage forecasts for the requested
      * storage location.
      *
+     * @param ctx the Javalin request context
      * @param ctx the request context
      */
     @OpenApi(
