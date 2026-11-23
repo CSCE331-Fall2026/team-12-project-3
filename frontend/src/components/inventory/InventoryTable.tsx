@@ -1,9 +1,10 @@
 import type { FormEvent } from 'react'
 
-import type { InventoryCategory, InventoryItem } from '../../types'
+import type { IngredientForecast, InventoryCategory, InventoryItem } from '../../types'
 
 type InventoryTableProps = {
   items: InventoryItem[]
+  forecasts: Record<string, IngredientForecast>
   category: InventoryCategory
   editingItem: string | null
   restockQuantity: string
@@ -26,6 +27,7 @@ type RestockFormProps = {
 
 type InventoryRowProps = {
   item: InventoryItem
+  forecast: IngredientForecast | undefined
   category: InventoryCategory
   editingItem: string | null
   restockQuantity: string
@@ -112,6 +114,7 @@ function RestockForm({
 
 function InventoryRow({
   item,
+  forecast,
   category,
   editingItem,
   restockQuantity,
@@ -151,12 +154,24 @@ function InventoryRow({
       </td>
       <td className="amount">{item.restockThreshold} {unit && <span>{unit}</span>}</td>
       <td><span className={`status ${status.className}`}>{status.label}</span></td>
+      <td className="forecast-cell">
+        {category === 'UTENSILS'
+          ? 'Not applicable'
+          : forecast?.daysUntilThreshold === null
+            ? 'No sales in last 7 days'
+            : forecast
+              ? forecast.daysUntilThreshold === 0
+                ? <span className="forecast-now" title={`Average usage: ${forecast.averageDailyUsage} ${unit} per day`}>Restock now</span>
+                : <span title={`Average usage: ${forecast.averageDailyUsage} ${unit} per day`}>~{forecast.daysUntilThreshold} {forecast.daysUntilThreshold === 1 ? 'day' : 'days'}</span>
+              : '—'}
+      </td>
     </tr>
   )
 }
 
 export default function InventoryTable({
   items,
+  forecasts,
   category,
   editingItem,
   restockQuantity,
@@ -175,6 +190,7 @@ export default function InventoryTable({
             <th>Amount on hand</th>
             <th>Restock threshold</th>
             <th>Status</th>
+            <th>Restock forecast</th>
           </tr>
         </thead>
         <tbody>
@@ -182,6 +198,7 @@ export default function InventoryTable({
             <InventoryRow
               key={item.name}
               item={item}
+              forecast={forecasts[item.name]}
               category={category}
               editingItem={editingItem}
               restockQuantity={restockQuantity}
