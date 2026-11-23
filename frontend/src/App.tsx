@@ -1,16 +1,16 @@
 import { useState } from 'react'
+
 import AppHeader from './components/AppHeader'
 import { useGoogleSignIn } from './hooks/useGoogleSignIn'
 import CustomerScreen from './screens/CustomerScreen'
 import ManagerScreen from './screens/ManagerScreen'
 import RoleSelectionScreen from './screens/RoleSelectionScreen'
 import SignInScreen from './screens/SignInScreen'
+import type { AppScreen } from './types'
 import './App.css'
 
-type Screen = 'signin' | 'role' | 'customer' | 'manager'
-
 function App() {
-  const [screen, setScreen] = useState<Screen>('signin')
+  const [screen, setScreen] = useState<AppScreen>('signin')
   const auth = useGoogleSignIn(screen, setScreen)
 
   return (

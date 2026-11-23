@@ -1,8 +1,14 @@
+export type AppScreen = 'signin' | 'role' | 'customer' | 'manager'
 export type UserRole = 'CUSTOMER' | 'MANAGER'
 export type GoogleProfile = { email: string; googleId: string }
 export type GoogleCredential = { credential: string }
 export type InventoryCategory = 'FREEZER' | 'REFRIGERATOR' | 'PANTRY' | 'UTENSILS'
-export type InventoryItem = { name: string; quantity?: number; restockThreshold: number; unit?: string }
+export type InventoryItem = {
+  name: string
+  quantity?: number
+  restockThreshold: number
+  unit?: string
+}
 export type MenuCategory = 'POPULAR' | 'ENTREE' | 'SIDE' | 'APPETIZER' | 'DRINK'
 export type MenuItem = {
   id: number
@@ -29,6 +35,13 @@ export const inventoryCategories: { id: InventoryCategory; label: string }[] = [
   { id: 'PANTRY', label: 'Pantry' },
   { id: 'UTENSILS', label: 'Utensils' },
 ]
+
+export const menuCategoryArt: Record<Exclude<MenuCategory, 'POPULAR'>, string> = {
+  ENTREE: '🥡',
+  SIDE: '🍜',
+  APPETIZER: '🥟',
+  DRINK: '🥤',
+}
 
 declare global {
   interface Window {

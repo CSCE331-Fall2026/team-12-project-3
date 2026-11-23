@@ -81,9 +81,9 @@ The frontend sends API requests through `src/api/client.ts`. In development, Vit
 
 If the backend is hosted on a different origin in production, configure it to allow requests from the deployed frontend origin. The frontend expects the backend routes and response data used by the API modules in `src/api/`.
 
-## Design reference
+## Code style
 
-Follow the [frontend style guide](STYLE_GUIDE.md) when changing or adding screens and components. It defines the color palette, typography, layout, responsive behavior, interaction patterns, and accessibility requirements.
+Follow the [frontend style guide](STYLE_GUIDE.md) when changing or adding screens, components, hooks, or API modules. It defines formatting, naming, TypeScript usage, component and hook structure, CSS conventions, accessibility requirements, and the lint and build checks that every change must pass.
 
 ## Troubleshooting
 

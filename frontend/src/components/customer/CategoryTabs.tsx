@@ -9,17 +9,20 @@ type CategoryTabsProps = {
 export default function CategoryTabs({ category, onSelect }: CategoryTabsProps) {
   return (
     <nav className="customer-tabs" aria-label="Menu categories">
-      {customerMenuCategories.map((entry) => (
-        <button
-          key={entry.id}
-          className={`customer-tab ${category === entry.id ? 'customer-tab-active' : ''}`}
-          type="button"
-          aria-pressed={category === entry.id}
-          onClick={() => onSelect(entry.id)}
-        >
-          {entry.label}
-        </button>
-      ))}
+      {customerMenuCategories.map((entry) => {
+        const isActive = category === entry.id
+        return (
+          <button
+            key={entry.id}
+            className={`customer-tab ${isActive ? 'customer-tab-active' : ''}`}
+            type="button"
+            aria-pressed={isActive}
+            onClick={() => onSelect(entry.id)}
+          >
+            {entry.label}
+          </button>
+        )
+      })}
     </nav>
   )
 }
