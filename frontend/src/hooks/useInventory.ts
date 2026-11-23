@@ -1,27 +1,38 @@
 import { useEffect, useState } from 'react'
+
 import { fetchInventoryItems, restockItem } from '../api/inventory'
 import type { InventoryCategory, InventoryItem } from '../types'
 
 export function useInventory() {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [category, setCategory] = useState<InventoryCategory>('FREEZER')
+  const [loadedCategory, setLoadedCategory] = useState<InventoryCategory | null>(null)
   const [editingItem, setEditingItem] = useState<string | null>(null)
   const [restockQuantity, setRestockQuantity] = useState('')
   const [restocking, setRestocking] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const loading = loadedCategory !== category
 
   useEffect(() => {
     let active = true
-    setLoading(true)
-    setError('')
+
     fetchInventoryItems(category)
-      .then((data) => { if (active) setItems(data) })
-      .catch((cause: unknown) => {
-        if (active) setError(cause instanceof Error ? cause.message : 'Inventory could not be loaded.')
+      .then((data) => {
+        if (!active) return
+        setItems(data)
+        setError('')
       })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
+      .catch((cause: unknown) => {
+        if (!active) return
+        setError(cause instanceof Error ? cause.message : 'Inventory could not be loaded.')
+      })
+      .finally(() => {
+        if (active) setLoadedCategory(category)
+      })
+
+    return () => {
+      active = false
+    }
   }, [category])
 
   const selectCategory = (nextCategory: InventoryCategory) => {
@@ -53,8 +64,17 @@ export function useInventory() {
   }
 
   return {
-    items, category, selectCategory, editingItem, setEditingItem,
-    restockQuantity, setRestockQuantity, restocking, saveRestock,
-    loading, error, setError,
+    items,
+    category,
+    selectCategory,
+    editingItem,
+    setEditingItem,
+    restockQuantity,
+    setRestockQuantity,
+    restocking,
+    saveRestock,
+    loading,
+    error,
+    setError,
   }
 }

@@ -121,3 +121,22 @@
 ** Prompt: ** Ensure OrderRequest is serlializable and that the OpenAPI and javadoc docs are up to date for OrderRequest and the ordering flow in the backend.
 
 **Output: ** The result of commit ID `212c1e6`.
+
+
+## 21. Order menu creation
+
+** Prompt: ** 
+Design a 2-Page ordering UI for the customer. 
+Page 1: Main order menu
+Have the following tabs: Popular, Entrees, sides, appetizers, and drinks. This will pull from the backend for a list for each tab
+Allow the user to add and subtract each item into the menu
+have a section of the screen dedicated to having a running total of the order, including its price
+have dummy images for each of the menu items
+Page 2: Checkout - view their total order, select their tip amount, and choose payment method (Card, dining dollars)
+
+**Output: ** The result of commit ID .
+
+## 22. Style Guide Fixes
+
+**Prompt:** Change the frontend style guide from a UI style guide to a code one, and then ensure that the frontend code adheres to the style guide.
+**Output:** The result of commit ID `7a7734d`.

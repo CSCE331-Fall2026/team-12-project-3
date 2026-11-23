@@ -1,10 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
+
 import { createUser, lookupRole, profileFromCredential } from '../api/auth'
-import type { GoogleCredential, GoogleProfile, UserRole } from '../types'
+import type { AppScreen, GoogleCredential, GoogleProfile, UserRole } from '../types'
 
-type Screen = 'signin' | 'role' | 'customer' | 'manager'
+const googleButtonOptions: Record<string, string> = {
+  theme: 'outline',
+  size: 'large',
+  shape: 'rectangular',
+  text: 'continue_with',
+  width: '320',
+}
 
-export function useGoogleSignIn(screen: Screen, setScreen: (screen: Screen) => void) {
+function screenForRole(role: UserRole | null): AppScreen {
+  if (role === null) return 'role'
+  return role === 'MANAGER' ? 'manager' : 'customer'
+}
+
+export function useGoogleSignIn(screen: AppScreen, setScreen: (screen: AppScreen) => void) {
   const [profile, setProfile] = useState<GoogleProfile | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -17,7 +29,7 @@ export function useGoogleSignIn(screen: Screen, setScreen: (screen: Screen) => v
       const nextProfile = profileFromCredential(credential)
       setProfile(nextProfile)
       const role = await lookupRole(nextProfile.email)
-      setScreen(role === null ? 'role' : role === 'MANAGER' ? 'manager' : 'customer')
+      setScreen(screenForRole(role))
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Sign-in could not be completed.')
     } finally {
@@ -33,9 +45,7 @@ export function useGoogleSignIn(screen: Screen, setScreen: (screen: Screen) => v
       if (!mount || !window.google || !clientId) return false
       mount.replaceChildren()
       window.google.accounts.id.initialize({ client_id: clientId, callback: handleCredential })
-      window.google.accounts.id.renderButton(mount, {
-        theme: 'outline', size: 'large', shape: 'rectangular', text: 'continue_with', width: '320',
-      })
+      window.google.accounts.id.renderButton(mount, googleButtonOptions)
       return true
     }
 
@@ -55,11 +65,12 @@ export function useGoogleSignIn(screen: Screen, setScreen: (screen: Screen) => v
 
   const chooseRole = async (selectedRole: UserRole) => {
     if (!profile) return
+
     setLoading(true)
     setError('')
     try {
       await createUser(profile, selectedRole)
-      setScreen(selectedRole === 'MANAGER' ? 'manager' : 'customer')
+      setScreen(screenForRole(selectedRole))
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Your role could not be saved.')
     } finally {
@@ -73,5 +84,14 @@ export function useGoogleSignIn(screen: Screen, setScreen: (screen: Screen) => v
     setError('')
   }
 
-  return { profile, loading, error, setError, handleCredential, chooseRole, signOut, clientId }
+  return {
+    profile,
+    loading,
+    error,
+    setError,
+    handleCredential,
+    chooseRole,
+    signOut,
+    clientId,
+  }
 }

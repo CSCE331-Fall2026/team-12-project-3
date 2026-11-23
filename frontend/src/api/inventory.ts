@@ -1,5 +1,5 @@
-import { apiFetch } from './client'
 import type { InventoryCategory, InventoryItem } from '../types'
+import { apiFetch } from './client'
 
 export async function fetchInventoryItems(category: InventoryCategory): Promise<InventoryItem[]> {
   const response = await apiFetch('/manager/ingredients', {
@@ -23,15 +23,5 @@ export async function restockItem(name: string, quantity: number, isUtensil: boo
   if (!response.ok) {
     const detail = (await response.text()).trim()
     throw new Error(detail || 'The item could not be restocked.')
-  }
-}
-
-export function displayUnit(unit: string | undefined, category: InventoryCategory) {
-  if (category === 'UTENSILS') return 'ea'
-  switch (unit?.toUpperCase()) {
-    case 'KILOGRAMS': return 'kg'
-    case 'LITERS': return 'L'
-    case 'ITEMS': return 'ea'
-    default: return unit ?? ''
   }
 }
