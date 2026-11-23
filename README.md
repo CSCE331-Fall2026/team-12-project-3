@@ -62,3 +62,4 @@ and the project will be managed and built using uv.
 ## Agile Project Board Link:
 
 Board link: https://github.com/orgs/CSCE331-Fall2026/projects/18.
+Burnup Chart: https://github.com/orgs/CSCE331-Fall2026/projects/18/insights/2
