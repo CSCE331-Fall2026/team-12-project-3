@@ -81,7 +81,7 @@ export async function fetchCategoryItems(category: Exclude<MenuCategory, 'POPULA
   }, 'loading the menu'))
 }
 
-export async function placeCustomerOrder(items: Record<number, number>, method: CustomerPaymentMethod, price: number) {
+export async function placeCustomerOrder(items: Record<string, number>, method: CustomerPaymentMethod, price: number) {
   const response = await request('/customer/order', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

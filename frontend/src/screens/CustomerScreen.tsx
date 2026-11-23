@@ -92,8 +92,12 @@ export default function CustomerScreen({ profile }: CustomerScreenProps) {
     setSubmitting(true)
     setOrderError('')
     try {
-      const itemMap = Object.fromEntries(lines.map(({ item, quantity }) => [item.id, quantity]))
-      await placeCustomerOrder(itemMap, method, subtotal + tip)
+      // JSON object keys are strings; Jackson converts these item ID keys to integers.
+      const itemMap: Record<string, number> = Object.fromEntries(
+        lines.map(({ item, quantity }) => [String(item.id), quantity]),
+      )
+      const totalPrice = Math.round((subtotal + tip + Number.EPSILON) * 100) / 100
+      await placeCustomerOrder(itemMap, method, totalPrice)
       setSuccessNote(`Your ${method === 'DINING_DOLLARS' ? 'dining dollars' : 'card'} payment was selected.`)
       setStep('complete')
       setQuantities({})
