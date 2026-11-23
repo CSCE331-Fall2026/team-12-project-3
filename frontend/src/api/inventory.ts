@@ -1,4 +1,4 @@
-import type { IngredientForecast, InventoryCategory, InventoryItem } from '../types'
+import type { InventoryCategory, InventoryItem } from '../types'
 import { apiFetch } from './client'
 
 export async function fetchInventoryItems(category: InventoryCategory): Promise<InventoryItem[]> {
@@ -14,19 +14,19 @@ export async function fetchInventoryItems(category: InventoryCategory): Promise<
   return response.json() as Promise<InventoryItem[]>
 }
 
-export async function fetchIngredientForecasts(
+export async function fetchDaysUntilRestock(
   category: Exclude<InventoryCategory, 'UTENSILS'>,
-): Promise<IngredientForecast[]> {
-  const response = await apiFetch('/manager/ingredient-forecasts', {
+): Promise<Record<string, number>> {
+  const response = await apiFetch('/manager/predictiverestocking', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ location: category }),
   })
   if (!response.ok) {
     const detail = (await response.text()).trim()
-    throw new Error(detail || 'Ingredient forecasts could not be loaded.')
+    throw new Error(detail || 'Restock forecast could not be loaded.')
   }
-  return response.json() as Promise<IngredientForecast[]>
+  return response.json() as Promise<Record<string, number>>
 }
 
 export async function restockItem(name: string, quantity: number, isUtensil: boolean) {

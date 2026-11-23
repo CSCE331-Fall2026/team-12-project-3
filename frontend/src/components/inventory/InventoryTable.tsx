@@ -1,10 +1,10 @@
 import type { FormEvent } from 'react'
 
-import type { IngredientForecast, InventoryCategory, InventoryItem } from '../../types'
+import type { InventoryCategory, InventoryItem } from '../../types'
 
 type InventoryTableProps = {
   items: InventoryItem[]
-  forecasts: Record<string, IngredientForecast>
+  forecasts: Record<string, number>
   category: InventoryCategory
   editingItem: string | null
   restockQuantity: string
@@ -27,7 +27,7 @@ type RestockFormProps = {
 
 type InventoryRowProps = {
   item: InventoryItem
-  forecast: IngredientForecast | undefined
+  daysUntilRestock: number | undefined
   category: InventoryCategory
   editingItem: string | null
   restockQuantity: string
@@ -114,7 +114,7 @@ function RestockForm({
 
 function InventoryRow({
   item,
-  forecast,
+  daysUntilRestock,
   category,
   editingItem,
   restockQuantity,
@@ -157,13 +157,13 @@ function InventoryRow({
       <td className="forecast-cell">
         {category === 'UTENSILS'
           ? 'Not applicable'
-          : forecast?.daysUntilThreshold === null
-            ? 'No sales in last 7 days'
-            : forecast
-              ? forecast.daysUntilThreshold === 0
-                ? <span className="forecast-now" title={`Average usage: ${forecast.averageDailyUsage} ${unit} per day`}>Restock now</span>
-                : <span title={`Average usage: ${forecast.averageDailyUsage} ${unit} per day`}>~{forecast.daysUntilThreshold} {forecast.daysUntilThreshold === 1 ? 'day' : 'days'}</span>
-              : '—'}
+          : daysUntilRestock === undefined
+            ? '—'
+            : daysUntilRestock < 0
+              ? 'No sales in last 7 days'
+              : daysUntilRestock === 0
+                ? <span className="forecast-now">Restock now</span>
+                : <span>~{daysUntilRestock} {daysUntilRestock === 1 ? 'day' : 'days'}</span>}
       </td>
     </tr>
   )
@@ -198,7 +198,7 @@ export default function InventoryTable({
             <InventoryRow
               key={item.name}
               item={item}
-              forecast={forecasts[item.name]}
+              daysUntilRestock={forecasts[item.name]}
               category={category}
               editingItem={editingItem}
               restockQuantity={restockQuantity}

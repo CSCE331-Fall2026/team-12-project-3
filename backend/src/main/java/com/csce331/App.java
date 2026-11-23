@@ -83,7 +83,6 @@ public class App {
 
             config.routes.get("/manager/ingredients", InventoryController::allIngredients);
             config.routes.query("/manager/ingredients", InventoryController::ingredientsByLocation);
-            config.routes.post("/manager/ingredient-forecasts", InventoryController::ingredientForecasts);
             config.routes.put("/manager/restock/", InventoryController::restock);
             config.routes.post("/manager/ingredients", InventoryController::ingredientsByLocation);
             config.routes.put("/manager/restock", InventoryController::restock);

@@ -9,11 +9,6 @@ export type InventoryItem = {
   restockThreshold: number
   unit?: string
 }
-export type IngredientForecast = {
-  name: string
-  averageDailyUsage: number
-  daysUntilThreshold: number | null
-}
 export type MenuCategory = 'POPULAR' | 'ENTREE' | 'SIDE' | 'APPETIZER' | 'DRINK'
 export type MenuItem = {
   id: number
