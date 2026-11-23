@@ -88,21 +88,25 @@ public class MenuItemManager extends DatabaseConnector {
 
         try {
             String query = "SELECT * FROM menu_items "
-                + "WHERE item_category = '" + category.toString().toLowerCase()
-                + "' AND is_active = TRUE";
-            Statement statement = this.createStatement();
-            ResultSet resultSet = statement.executeQuery(query);
+                + "WHERE item_category = ?::menu_category AND is_active = TRUE";
 
-            while (resultSet.next()) {
-                String name = resultSet.getString("name");
-                MenuItemSize size = MenuItemSize.fromString(resultSet.getString("item_size"));
-                double price = resultSet.getDouble("price");
+            try (PreparedStatement statement =
+                    this.getConnection().prepareStatement(query)) {
+                statement.setString(1, category.toString().toLowerCase());
 
-                MenuItem item = new MenuItem.Builder(name, category)
-                    .size(size)
-                    .price(price)
-                    .build();
-                menuItemsList.add(item);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String name = resultSet.getString("name");
+                        MenuItemSize size = MenuItemSize.fromString(resultSet.getString("item_size"));
+                        double price = resultSet.getDouble("price");
+
+                        MenuItem item = new MenuItem.Builder(name, category)
+                            .size(size)
+                            .price(price)
+                            .build();
+                        menuItemsList.add(item);
+                    }
+                }
             }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
@@ -122,13 +126,17 @@ public class MenuItemManager extends DatabaseConnector {
      * @throws SQLException if the update fails
      */
     public void updatePrice(String name, MenuItemSize size, double newPrice) throws SQLException {
-        try {
-            String updateQuery = "UPDATE menu_items "
-                + "SET price = " + newPrice + " "
-                + "WHERE name = '" + name + "' "
-                + "AND item_size = '" + size.toString().toLowerCase() + "'";
-            Statement updateStatement = this.createStatement();
-            updateStatement.executeUpdate(updateQuery);
+        String updateQuery = "UPDATE menu_items "
+            + "SET price = ? "
+            + "WHERE name = ? "
+            + "AND item_size = ?::size_category";
+
+        try (PreparedStatement updateStatement =
+                this.getConnection().prepareStatement(updateQuery)) {
+            updateStatement.setDouble(1, newPrice);
+            updateStatement.setString(2, name);
+            updateStatement.setString(3, size.toString().toLowerCase());
+            updateStatement.executeUpdate();
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
             throw e;
@@ -145,12 +153,15 @@ public class MenuItemManager extends DatabaseConnector {
      * @throws SQLException if the update fails
      */
     public void discontinueMenuItem(String name, MenuItemSize size) throws SQLException {
-        try {
-            String discontinueQuery = "UPDATE menu_items SET is_active = FALSE " +
-                "WHERE name = '" + name + "'" +
-                "AND item_size = '" + size.toString().toLowerCase() + "'";
-            Statement discontinueStatement = this.createStatement();
-            discontinueStatement.executeUpdate(discontinueQuery);
+        String discontinueQuery = "UPDATE menu_items SET is_active = FALSE " +
+            "WHERE name = ? " +
+            "AND item_size = ?::size_category";
+
+        try (PreparedStatement discontinueStatement =
+                this.getConnection().prepareStatement(discontinueQuery)) {
+            discontinueStatement.setString(1, name);
+            discontinueStatement.setString(2, size.toString().toLowerCase());
+            discontinueStatement.executeUpdate();
         } catch (SQLException e) {
             ExceptionLogger.logException(e);
             throw e;
@@ -188,6 +199,19 @@ public class MenuItemManager extends DatabaseConnector {
                 "GROUP BY mi.name, o.order_date;";
 
         try (PreparedStatement salesStatement = this.getConnection().prepareStatement(salesQuery)) {
+            "SELECT mi.name, o.order_date AS sale_date, " +
+            "SUM(om.quantity * mi.price) AS total_sales " +
+            "FROM order_menu AS om " +
+            "JOIN orders AS o " +
+            "ON om.order_id = o.id " +
+            "JOIN menu_items AS mi " +
+            "ON om.menu_item_id = mi.id " +
+            "WHERE o.order_date BETWEEN ? AND ? " +
+            "AND o.order_time BETWEEN ? AND ? " +
+            "GROUP BY mi.name, o.order_date;";
+
+        try (PreparedStatement salesStatement =
+                this.getConnection().prepareStatement(salesQuery)) {
             salesStatement.setDate(1, Date.valueOf(sqlStartDate));
             salesStatement.setDate(2, Date.valueOf(sqlEndDate));
             salesStatement.setTime(3, Time.valueOf(sqlStartTime));

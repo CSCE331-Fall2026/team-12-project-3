@@ -61,7 +61,12 @@ public class App {
      */
     public static void main(String[] args) {
         Javalin app = Javalin.create(config -> {
-            config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> rule.anyHost()));
+            config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> {
+                rule.allowHost(
+                    "http://localhost:5173", // Vite dev server
+                    "https://team-12-project-3-one.vercel.app" // Vercel deployment
+                );
+            }));
 
             config.registerPlugin(new OpenApiPlugin(openapi -> {
                 openapi.withDefinitionConfiguration((version, builder) -> {
@@ -80,32 +85,26 @@ public class App {
             config.routes.query("/manager/ingredients", InventoryController::ingredientsByLocation);
             config.routes.post("/manager/ingredient-forecasts", InventoryController::ingredientForecasts);
             config.routes.put("/manager/restock/", InventoryController::restock);
+            config.routes.post("/manager/ingredients", InventoryController::ingredientsByLocation);
+            config.routes.put("/manager/restock", InventoryController::restock);
             config.routes.patch("/manager/threshold", InventoryController::setRestockThreshold);
             config.routes.delete("/manager/endday", InventoryController::endDay);
-            config.routes.query("/manager/restockreport", InventoryController::restockReport);
+            config.routes.post("/manager/restockreport", InventoryController::restockReport);
+            config.routes.post("manager/predictiverestocking", InventoryController::predictiveRestocking);
             config.routes.get("/manager/menuitems", MenuItemController::allMenuItems);
-            config.routes.query("/manager/menuitems", MenuItemController::menuItemByCategory);
+            config.routes.post("/manager/menuitems", MenuItemController::menuItemByCategory);
             config.routes.patch("/manager/menuitems/price", MenuItemController::updatePrice);
             config.routes.patch("/manager/menuitems/discontinue", MenuItemController::discontinueMenuItem);
             config.routes.get("/manager/salesreport", MenuItemController::salesReport);
             config.routes.post("/manager/salesreport", MenuItemController::salesReport);
 
             config.routes.get("/customer/menuitems", CustomerMenuController::popularItems);
-            config.routes.query("/customer/menuitems", CustomerMenuController::menuItemByCategory);
+            config.routes.post("/customer/menuitems", CustomerMenuController::menuItemByCategory);
             config.routes.post("/customer/order", CustomerMenuController::order);
 
-            config.routes.query("/auth/role/email", AuthenticationController::getUserRoleByEmail);
-            config.routes.query("/auth/role/id", AuthenticationController::getUserRoleById);
-            config.routes.post("/auth/newuser", AuthenticationController::createUser);
-
-            // OpenAPI 3.1 has no operation for the QUERY method, so the same
-            // handlers are also exposed over POST for the Swagger UI.
-            config.routes.post("/manager/ingredients", InventoryController::ingredientsByLocation);
-            config.routes.post("/manager/restockreport", InventoryController::restockReport);
-            config.routes.post("/manager/menuitems", MenuItemController::menuItemByCategory);
-            config.routes.post("/customer/menuitems", CustomerMenuController::menuItemByCategory);
             config.routes.post("/auth/role/email", AuthenticationController::getUserRoleByEmail);
             config.routes.post("/auth/role/id", AuthenticationController::getUserRoleById);
+            config.routes.post("/auth/newuser", AuthenticationController::createUser);
         }).start(8080);
     }
 }

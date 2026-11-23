@@ -8,6 +8,7 @@ import io.javalin.http.Context;
 import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
 import io.javalin.openapi.OpenApiContent;
+import io.javalin.openapi.OpenApiExampleProperty;
 import io.javalin.openapi.OpenApiRequestBody;
 import io.javalin.openapi.OpenApiResponse;
 
@@ -18,7 +19,7 @@ import com.csce331.requests.OrderRequest;
 import com.csce331.managers.OrderManager;
 
 /**
- * HTTP handlers for browsing the customer menu.
+ * HTTP handlers for browsing the customer menu and placing orders.
  */
 public class CustomerMenuController {
     private static final OrderManager orderManager = new OrderManager();
@@ -116,8 +117,9 @@ public class CustomerMenuController {
     }
 
     /**
-     * Places the order in the request body. Responds 201 on success, 400 for
-     * an invalid order, and 500 if the database query fails.
+     * Places the order in the request body. Responds 201 with an empty body on
+     * success, 400 when the body is malformed or the order is invalid, and 500
+     * if the database query fails.
      *
      * @param ctx the Javalin request context
      */
@@ -127,23 +129,40 @@ public class CustomerMenuController {
         operationId = "placeOrder",
         summary = "Place a customer order",
         description = "Places the order described in the request body. Responds "
-            + "with 201 on success, 400 for an invalid order, and 500 if the "
-            + "database query fails.",
+            + "with 201 and an empty response body on success, 400 when the "
+            + "request body is malformed or the order is invalid, and 500 if "
+            + "the database query fails.",
         tags = {"Customer menu"},
         requestBody = @OpenApiRequestBody(
-            description = "The ordered menu items and their quantities, the "
-                + "payment method, and the total non-negative price.",
+            description = "The order to place. The items field maps menu item "
+                + "IDs to quantities and must not be empty, the method field "
+                + "names an accepted payment method, and the price field is the "
+                + "non-negative order total.",
             required = true,
-            content = @OpenApiContent(from = OrderRequest.class)
+            content = @OpenApiContent(
+                from = OrderRequest.class,
+                exampleObjects = {
+                    @OpenApiExampleProperty(
+                        name = "items",
+                        objects = {
+                            @OpenApiExampleProperty(name = "1", raw = "2"),
+                            @OpenApiExampleProperty(name = "3", raw = "1")
+                        }
+                    ),
+                    @OpenApiExampleProperty(name = "method", value = "CASH"),
+                    @OpenApiExampleProperty(name = "price", raw = "12.5")
+                }
+            )
         ),
         responses = {
             @OpenApiResponse(
                 status = "201",
-                description = "The order was placed."
+                description = "The order was placed. The response body is empty."
             ),
             @OpenApiResponse(
                 status = "400",
-                description = "The order is invalid.",
+                description = "The request body is malformed, or the order has "
+                    + "no items, no payment method, or a negative price.",
                 content = @OpenApiContent(from = String.class, mimeType = "text/plain")
             ),
             @OpenApiResponse(
