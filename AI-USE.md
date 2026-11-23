@@ -88,3 +88,55 @@
 **Prompt: ** Add the necessary Swagger annotations to all of the endpoints in App describing them in accordance to the docstrings for the corresponding methods such that an API consumer knows how to use the API. Reference the Javalin OpenAPI plugin documentation online for reference: https://javalin.github.io/javalin-openapi/introduction/setup.html
 
 **Output: ** The result of commit ID `4d6cbf5`.
+
+## 16. String Substitution Refactor
+
+**Prompt: ** Refactor the *Manager classes in the backend to use string substitution (using JDBC's inbuilt functionality for statements to do this) instead of string concatenation.
+
+**Output: ** The result of commit ID `7820cf6`.
+
+## 17. Further OpenAPI Documentation
+
+**Prompt: ** Add swagger documentation for the undocumented endpoint in InventoryController in the backend. Format the documentation just like the other endpoint documentation.
+
+**Output: ** The result of commit ID `a8e436a`.
+
+## 18. Update Documentation
+
+**Prompt: ** Update the documentation to reflect the changes made in the backend. Ensure that the documentation is accurate and up to date.
+
+**Output: ** The result of commit ID `cfd350c`.
+
+## 19. Refactor frontend 
+
+**Prompt(s): ** 
+"Take a look at the files in the frontend/src directory. How could the those files be broken up to improve readability?"
+"clarifying prompts"
+
+**Output: ** The result of commit ID
+
+
+## 20. Update Documentation for New Serializability
+
+** Prompt: ** Ensure OrderRequest is serlializable and that the OpenAPI and javadoc docs are up to date for OrderRequest and the ordering flow in the backend.
+
+**Output: ** The result of commit ID `212c1e6`.
+
+
+## 21. Order menu creation
+
+** Prompt: ** 
+Design a 2-Page ordering UI for the customer. 
+Page 1: Main order menu
+Have the following tabs: Popular, Entrees, sides, appetizers, and drinks. This will pull from the backend for a list for each tab
+Allow the user to add and subtract each item into the menu
+have a section of the screen dedicated to having a running total of the order, including its price
+have dummy images for each of the menu items
+Page 2: Checkout - view their total order, select their tip amount, and choose payment method (Card, dining dollars)
+
+**Output: ** The result of commit ID .
+
+## 22. Style Guide Fixes
+
+**Prompt:** Change the frontend style guide from a UI style guide to a code one, and then ensure that the frontend code adheres to the style guide.
+**Output:** The result of commit ID `7a7734d`.

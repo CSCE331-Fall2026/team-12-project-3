@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
+
+import AppHeader from './components/AppHeader'
+import { useGoogleSignIn } from './hooks/useGoogleSignIn'
+import CustomerScreen from './screens/CustomerScreen'
+import ManagerScreen from './screens/ManagerScreen'
+import RoleSelectionScreen from './screens/RoleSelectionScreen'
+import SignInScreen from './screens/SignInScreen'
+import type { AppScreen } from './types'
 import './App.css'
 
 type UserRole = 'CUSTOMER' | 'MANAGER'
@@ -263,44 +271,16 @@ function App() {
     setScreen('signin')
     setError('')
   }
+function App() {
+  const [screen, setScreen] = useState<AppScreen>('signin')
+  const auth = useGoogleSignIn(screen, setScreen)
 
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <a className="brand" href="#home" onClick={(event) => { event.preventDefault(); signOut() }} aria-label="Panda Express home">
-          <span className="brand-wordmark"><strong>PANDA</strong><b>EXPRESS</b></span>
-        </a>
-        <span className="topbar-note">STORE OPERATIONS</span>
-        {profile && <button className="signout" type="button" onClick={signOut}>Sign out</button>}
-      </header>
-
+      <AppHeader signedIn={auth.profile !== null} onSignOut={auth.signOut} />
       {screen === 'signin' && (
-        <main className="auth-layout">
-          <section className="welcome-panel">
-            <div>
-              <div className="eyebrow">Panda Express</div>
-              <h1>We Wok<br />For You.</h1>
-              <p>Sign in to order your favorites or keep your restaurant running smoothly.</p>
-            </div>
-            <div className="bowl-art" aria-hidden="true"><span>〰</span><div /></div>
-            <small>Freshly prepared. Always ready to serve.</small>
-          </section>
-          <section className="auth-panel">
-            <div className="step-indicator" aria-hidden="true"><i className="active" /><i /><i /></div>
-            <h2>Welcome to Panda Express</h2>
-            <p className="muted">Sign in with Google to get started.</p>
-            {clientId ? <div id="google-button" className="google-mount" /> : (
-              <div className="setup-notice" role="status">
-                Google sign-in needs a client ID. Set <code>VITE_GOOGLE_CLIENT_ID</code> in the frontend environment.
-              </div>
-            )}
-            {loading && <p className="muted" role="status">Checking your account…</p>}
-            {error && <p className="error-message" role="alert">{error}</p>}
-            <p className="auth-foot">Secure sign in · Your account, your role</p>
-          </section>
-        </main>
+        <SignInScreen clientId={auth.clientId} loading={auth.loading} error={auth.error} />
       )}
-
       {screen === 'role' && (
         <main className="role-layout">
           <div className="role-content">
@@ -418,7 +398,15 @@ function App() {
           </section>
           <p className="manager-foot">Items at or below their threshold need restocking. Forecasts estimate when ingredients reach that threshold using average usage over the last 7 days.</p>
         </main>
+        <RoleSelectionScreen
+          profile={auth.profile}
+          loading={auth.loading}
+          error={auth.error}
+          onChooseRole={(role) => { void auth.chooseRole(role) }}
+        />
       )}
+      {screen === 'customer' && <CustomerScreen profile={auth.profile} />}
+      {screen === 'manager' && <ManagerScreen profile={auth.profile} />}
     </div>
   )
 }
