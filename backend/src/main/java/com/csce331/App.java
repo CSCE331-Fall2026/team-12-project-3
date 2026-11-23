@@ -78,6 +78,7 @@ public class App {
 
             config.routes.get("/manager/ingredients", InventoryController::allIngredients);
             config.routes.query("/manager/ingredients", InventoryController::ingredientsByLocation);
+            config.routes.post("/manager/ingredient-forecasts", InventoryController::ingredientForecasts);
             config.routes.put("/manager/restock/", InventoryController::restock);
             config.routes.patch("/manager/threshold", InventoryController::setRestockThreshold);
             config.routes.delete("/manager/endday", InventoryController::endDay);

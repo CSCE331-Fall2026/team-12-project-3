@@ -13,6 +13,7 @@ import io.javalin.openapi.OpenApiResponse;
 
 import com.csce331.managers.InventoryManager;
 import com.csce331.models.Ingredient;
+import com.csce331.models.IngredientForecast;
 import com.csce331.models.Utensil;
 import com.csce331.models.InventoryLocation;
 import com.csce331.models.IngredientRestockData;
@@ -137,6 +138,58 @@ public class InventoryController {
             ctx.status(400).result(e.getMessage());
         } catch (SQLException e) {
             ctx.status(500).result("Error retrieving ingredients: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Responds with recent ingredient usage forecasts for the requested
+     * storage location.
+     *
+     * @param ctx the request context
+     */
+    @OpenApi(
+        path = "/manager/ingredient-forecasts",
+        methods = HttpMethod.POST,
+        operationId = "getIngredientForecasts",
+        summary = "Forecast ingredient restock timing",
+        description = "Returns each ingredient's average daily usage and estimated "
+            + "days until its restock threshold, based on orders from the last "
+            + "seven calendar days. A null daysUntilThreshold means there were no "
+            + "sales during that period.",
+        tags = {"Inventory"},
+        requestBody = @OpenApiRequestBody(
+            description = "The storage location to forecast.",
+            required = true,
+            content = @OpenApiContent(from = LocationRequest.class)
+        ),
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "Ingredient forecasts for the requested location.",
+                content = @OpenApiContent(from = IngredientForecast[].class)
+            ),
+            @OpenApiResponse(
+                status = "400",
+                description = "The location is missing or unknown.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            ),
+            @OpenApiResponse(
+                status = "500",
+                description = "The database query failed.",
+                content = @OpenApiContent(from = String.class, mimeType = "text/plain")
+            )
+        }
+    )
+    public static void ingredientForecasts(Context ctx) {
+        try {
+            LocationRequest request = ctx.bodyAsClass(LocationRequest.class);
+            List<IngredientForecast> forecasts =
+                    inventoryManager.getIngredientForecasts(request.location());
+            ctx.status(200).json(forecasts);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).result(e.getMessage());
+        } catch (SQLException e) {
+            ctx.status(500).result("Error retrieving ingredient forecasts: " + e.getMessage());
         }
     }
     

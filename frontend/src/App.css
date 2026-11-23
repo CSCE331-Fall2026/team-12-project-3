@@ -78,6 +78,8 @@ tbody tr:last-child td { border-bottom: 0; }
 .item-name { font-weight: 650; }
 .amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .amount span { color: #91867c; font-size: 11px; }
+.forecast-cell { color: #51473f; font-size: 12px; white-space: nowrap; }
+.forecast-now { color: #c8102e; font-weight: 700; }
 .quantity-cell { min-width: 135px; display: flex; align-items: center; gap: 12px; }
 .edit-action, .small-action { border: 0; color: #c8102e; background: transparent; font-size: 11px; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 .edit-action:hover, .small-action:hover { color: #8c0c20; }
@@ -111,7 +113,7 @@ tbody tr:last-child td { border-bottom: 0; }
   .inventory-section { padding: 19px 15px 10px; }
   .category-tabs { gap: 0; overflow-x: auto; }
   .category-tab { flex: 0 0 auto; padding-inline: 12px; }
-  table { min-width: 570px; }
+  table { min-width: 710px; }
   th, td { padding-inline: 10px; }
 }
 

@@ -6,6 +6,11 @@ type GoogleProfile = { email: string; googleId: string }
 type GoogleCredential = { credential: string }
 type InventoryCategory = 'FREEZER' | 'REFRIGERATOR' | 'PANTRY' | 'UTENSILS'
 type InventoryItem = { name: string; quantity?: number; restockThreshold: number; unit?: string }
+type IngredientForecast = {
+  name: string
+  averageDailyUsage: number
+  daysUntilThreshold: number | null
+}
 
 const inventoryCategories: { id: InventoryCategory; label: string }[] = [
   { id: 'FREEZER', label: 'Freezer' },
@@ -54,6 +59,19 @@ async function fetchInventoryItems(category: InventoryCategory) {
   return response.json() as Promise<InventoryItem[]>
 }
 
+async function fetchIngredientForecasts(category: Exclude<InventoryCategory, 'UTENSILS'>) {
+  const response = await apiFetch('/manager/ingredient-forecasts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ location: category }),
+  })
+  if (!response.ok) {
+    const detail = (await response.text()).trim()
+    throw new Error(detail || 'Ingredient forecasts could not be loaded.')
+  }
+  return response.json() as Promise<IngredientForecast[]>
+}
+
 function displayUnit(unit: string | undefined, category: InventoryCategory) {
   if (category === 'UTENSILS') return 'ea'
   switch (unit?.toUpperCase()) {
@@ -87,11 +105,13 @@ function App() {
   const [profile, setProfile] = useState<GoogleProfile | null>(null)
   const [screen, setScreen] = useState<'signin' | 'role' | 'customer' | 'manager'>('signin')
   const [items, setItems] = useState<InventoryItem[]>([])
+  const [forecasts, setForecasts] = useState<Record<string, IngredientForecast>>({})
   const [category, setCategory] = useState<InventoryCategory>('FREEZER')
   const [editingItem, setEditingItem] = useState<string | null>(null)
   const [restockQuantity, setRestockQuantity] = useState('')
   const [restocking, setRestocking] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [inventoryLoading, setInventoryLoading] = useState(false)
   const [error, setError] = useState('')
 
   const handleCredential = useCallback(async ({ credential }: GoogleCredential) => {
@@ -108,6 +128,11 @@ function App() {
 
       if (response.ok) {
         const savedRole = await readRole(response)
+        if (savedRole === 'MANAGER') {
+          setItems([])
+          setForecasts({})
+          setInventoryLoading(true)
+        }
         setScreen(savedRole === 'MANAGER' ? 'manager' : 'customer')
       } else if (response.status === 404) {
         setScreen('role')
@@ -156,14 +181,19 @@ function App() {
   useEffect(() => {
     if (screen !== 'manager') return
     let active = true
-    setLoading(true)
-    setError('')
-    fetchInventoryItems(category)
-      .then((data) => { if (active) setItems(data) })
+    Promise.all([
+      fetchInventoryItems(category),
+      category === 'UTENSILS' ? Promise.resolve([]) : fetchIngredientForecasts(category),
+    ])
+      .then(([data, forecastData]) => {
+        if (!active) return
+        setItems(data)
+        setForecasts(Object.fromEntries(forecastData.map((forecast) => [forecast.name, forecast])))
+      })
       .catch((cause: unknown) => {
         if (active) setError(cause instanceof Error ? cause.message : 'Inventory could not be loaded.')
       })
-      .finally(() => { if (active) setLoading(false) })
+      .finally(() => { if (active) setInventoryLoading(false) })
     return () => { active = false }
   }, [screen, category])
 
@@ -186,7 +216,12 @@ function App() {
         const detail = (await response.text()).trim()
         throw new Error(detail || 'The item could not be restocked.')
       }
-      setItems(await fetchInventoryItems(category))
+      const [updatedItems, updatedForecasts] = await Promise.all([
+        fetchInventoryItems(category),
+        category === 'UTENSILS' ? Promise.resolve([]) : fetchIngredientForecasts(category),
+      ])
+      setItems(updatedItems)
+      setForecasts(Object.fromEntries(updatedForecasts.map((forecast) => [forecast.name, forecast])))
       setEditingItem(null)
       setRestockQuantity('')
     } catch (cause) {
@@ -209,6 +244,11 @@ function App() {
       if (!response.ok) {
         const detail = await response.text()
         throw new Error(detail || 'Your role could not be saved.')
+      }
+      if (selectedRole === 'MANAGER') {
+        setItems([])
+        setForecasts({})
+        setInventoryLoading(true)
       }
       setScreen(selectedRole === 'MANAGER' ? 'manager' : 'customer')
     } catch (cause) {
@@ -310,20 +350,29 @@ function App() {
                   className={`category-tab ${category === entry.id ? 'category-tab-active' : ''}`}
                   type="button"
                   aria-pressed={category === entry.id}
-                  onClick={() => { setCategory(entry.id); setEditingItem(null); setRestockQuantity(''); setError('') }}
+                  onClick={() => {
+                    setCategory(entry.id)
+                    setItems([])
+                    setForecasts({})
+                    setInventoryLoading(true)
+                    setEditingItem(null)
+                    setRestockQuantity('')
+                    setError('')
+                  }}
                 >
                   {entry.label}
                 </button>
               ))}
             </nav>
-            {loading && <p className="muted" role="status">Loading inventory…</p>}
+            {inventoryLoading && <p className="muted" role="status">Loading inventory…</p>}
             {error && <p className="error-message" role="alert">{error}</p>}
-            {!loading && <div className="table-wrap">
+            {!inventoryLoading && <div className="table-wrap">
               <table>
-                <thead><tr><th>Inventory item</th><th>Amount on hand</th><th>Restock threshold</th><th>Status</th></tr></thead>
+                <thead><tr><th>Inventory item</th><th>Amount on hand</th><th>Restock threshold</th><th>Status</th><th>Restock forecast</th></tr></thead>
                 <tbody>{items.map((item) => {
                   const unit = displayUnit(item.unit, category)
                   const low = item.quantity !== undefined && item.quantity <= item.restockThreshold
+                  const forecast = forecasts[item.name]
                   return <tr key={item.name}>
                     <td className="item-name">{item.name}</td>
                     <td>
@@ -352,13 +401,22 @@ function App() {
                     </td>
                     <td className="amount">{item.restockThreshold} {unit && <span>{unit}</span>}</td>
                     <td><span className={`status ${item.quantity === undefined ? 'status-unavailable' : low ? 'status-low' : 'status-ok'}`}>{item.quantity === undefined ? 'Count unavailable' : low ? 'Restock' : 'In stock'}</span></td>
+                    <td className="forecast-cell">
+                      {category === 'UTENSILS' ? 'Not applicable' : forecast?.daysUntilThreshold === null
+                        ? 'No sales in last 7 days'
+                        : forecast
+                          ? forecast.daysUntilThreshold === 0
+                            ? <span className="forecast-now" title={`Average usage: ${forecast.averageDailyUsage} ${unit} per day`}>Restock now</span>
+                            : <span title={`Average usage: ${forecast.averageDailyUsage} ${unit} per day`}>~{forecast.daysUntilThreshold} {forecast.daysUntilThreshold === 1 ? 'day' : 'days'}</span>
+                          : '—'}
+                    </td>
                   </tr>
                 })}</tbody>
               </table>
               {items.length === 0 && <p className="empty-state">No inventory items found.</p>}
             </div>}
           </section>
-          <p className="manager-foot">Items at or below their threshold need restocking.</p>
+          <p className="manager-foot">Items at or below their threshold need restocking. Forecasts estimate when ingredients reach that threshold using average usage over the last 7 days.</p>
         </main>
       )}
     </div>
