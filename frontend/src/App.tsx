@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import SalesReport from './components/SalesReport'
+import { apiFetch, fetchIngredientForecasts, type IngredientForecast } from './api'
 import './App.css'
 
 type UserRole = 'CUSTOMER' | 'MANAGER'
@@ -31,16 +33,6 @@ declare global {
 }
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-const backendUrl = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, '')
-
-function apiFetch(path: string, init?: RequestInit) {
-  if (!backendUrl) {
-    return Promise.reject(new Error('Set BACKEND_URL in the frontend environment to connect to the backend.'))
-  }
-  const url = import.meta.env.DEV ? `/api${path}` : `${backendUrl}${path}`
-  return fetch(url, init)
-}
-
 async function fetchInventoryItems(category: InventoryCategory) {
   const response = await apiFetch('/manager/ingredients', {
     method: 'POST',
@@ -86,11 +78,14 @@ async function readRole(response: Response): Promise<UserRole> {
 function App() {
   const [profile, setProfile] = useState<GoogleProfile | null>(null)
   const [screen, setScreen] = useState<'signin' | 'role' | 'customer' | 'manager'>('signin')
+  const [managerView, setManagerView] = useState<'inventory' | 'sales'>('inventory')
   const [items, setItems] = useState<InventoryItem[]>([])
+  const [forecasts, setForecasts] = useState<Record<string, IngredientForecast>>({})
   const [category, setCategory] = useState<InventoryCategory>('FREEZER')
   const [editingItem, setEditingItem] = useState<string | null>(null)
   const [restockQuantity, setRestockQuantity] = useState('')
   const [restocking, setRestocking] = useState(false)
+  const [inventoryLoading, setInventoryLoading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -108,6 +103,7 @@ function App() {
 
       if (response.ok) {
         const savedRole = await readRole(response)
+        if (savedRole === 'MANAGER') setInventoryLoading(true)
         setScreen(savedRole === 'MANAGER' ? 'manager' : 'customer')
       } else if (response.status === 404) {
         setScreen('role')
@@ -156,14 +152,19 @@ function App() {
   useEffect(() => {
     if (screen !== 'manager') return
     let active = true
-    setLoading(true)
-    setError('')
-    fetchInventoryItems(category)
-      .then((data) => { if (active) setItems(data) })
+    Promise.all([
+      fetchInventoryItems(category),
+      category === 'UTENSILS' ? Promise.resolve([]) : fetchIngredientForecasts(category),
+    ])
+      .then(([data, forecastData]) => {
+        if (!active) return
+        setItems(data)
+        setForecasts(Object.fromEntries(forecastData.map((forecast) => [forecast.name, forecast])))
+      })
       .catch((cause: unknown) => {
         if (active) setError(cause instanceof Error ? cause.message : 'Inventory could not be loaded.')
       })
-      .finally(() => { if (active) setLoading(false) })
+      .finally(() => { if (active) setInventoryLoading(false) })
     return () => { active = false }
   }, [screen, category])
 
@@ -186,7 +187,12 @@ function App() {
         const detail = (await response.text()).trim()
         throw new Error(detail || 'The item could not be restocked.')
       }
-      setItems(await fetchInventoryItems(category))
+      const [updatedItems, forecastData] = await Promise.all([
+        fetchInventoryItems(category),
+        category === 'UTENSILS' ? Promise.resolve([]) : fetchIngredientForecasts(category),
+      ])
+      setItems(updatedItems)
+      setForecasts(Object.fromEntries(forecastData.map((forecast) => [forecast.name, forecast])))
       setEditingItem(null)
       setRestockQuantity('')
     } catch (cause) {
@@ -210,6 +216,7 @@ function App() {
         const detail = await response.text()
         throw new Error(detail || 'Your role could not be saved.')
       }
+      if (selectedRole === 'MANAGER') setInventoryLoading(true)
       setScreen(selectedRole === 'MANAGER' ? 'manager' : 'customer')
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Your role could not be saved.')
@@ -298,9 +305,29 @@ function App() {
       {screen === 'manager' && (
         <main className="manager-page">
           <div className="manager-heading">
-            <div><div className="eyebrow">Panda Express · Store operations</div><h1>Inventory</h1><p className="muted">Keep every wok ready for the next order.</p></div>
+            <div><div className="eyebrow">Panda Express · Store operations</div><h1>{managerView === 'inventory' ? 'Inventory' : 'Sales report'}</h1><p className="muted">Manage your store and track sales performance.</p></div>
             <div className="manager-user"><span className="avatar">{profile?.email.slice(0, 1).toUpperCase()}</span><span>{profile?.email}</span></div>
           </div>
+          <nav className="manager-navigation" aria-label="Manager sections">
+            <button
+              className={managerView === 'inventory' ? 'manager-navigation-active' : ''}
+              type="button"
+              aria-current={managerView === 'inventory' ? 'page' : undefined}
+              onClick={() => setManagerView('inventory')}
+            >
+              Inventory
+            </button>
+            <button
+              className={managerView === 'sales' ? 'manager-navigation-active' : ''}
+              type="button"
+              aria-current={managerView === 'sales' ? 'page' : undefined}
+              onClick={() => setManagerView('sales')}
+            >
+              Sales report
+            </button>
+          </nav>
+          {managerView === 'inventory' ? (
+          <>
           <section className="inventory-section">
             <div className="inventory-header"><div><h2>{inventoryCategories.find((entry) => entry.id === category)?.label} inventory</h2><p className="muted">Current quantity compared with its restock threshold.</p></div></div>
             <nav className="category-tabs" aria-label="Inventory categories">
@@ -310,20 +337,29 @@ function App() {
                   className={`category-tab ${category === entry.id ? 'category-tab-active' : ''}`}
                   type="button"
                   aria-pressed={category === entry.id}
-                  onClick={() => { setCategory(entry.id); setEditingItem(null); setRestockQuantity(''); setError('') }}
+                  onClick={() => {
+                    setCategory(entry.id)
+                    setItems([])
+                    setForecasts({})
+                    setInventoryLoading(true)
+                    setEditingItem(null)
+                    setRestockQuantity('')
+                    setError('')
+                  }}
                 >
                   {entry.label}
                 </button>
               ))}
             </nav>
-            {loading && <p className="muted" role="status">Loading inventory…</p>}
+            {inventoryLoading && <p className="muted" role="status">Loading inventory…</p>}
             {error && <p className="error-message" role="alert">{error}</p>}
-            {!loading && <div className="table-wrap">
+            {!inventoryLoading && <div className="table-wrap">
               <table>
-                <thead><tr><th>Inventory item</th><th>Amount on hand</th><th>Restock threshold</th><th>Status</th></tr></thead>
+                <thead><tr><th>Inventory item</th><th>Amount on hand</th><th>Restock threshold</th><th>Status</th><th>Restock forecast</th></tr></thead>
                 <tbody>{items.map((item) => {
                   const unit = displayUnit(item.unit, category)
                   const low = item.quantity !== undefined && item.quantity <= item.restockThreshold
+                  const forecast = forecasts[item.name]
                   return <tr key={item.name}>
                     <td className="item-name">{item.name}</td>
                     <td>
@@ -352,6 +388,17 @@ function App() {
                     </td>
                     <td className="amount">{item.restockThreshold} {unit && <span>{unit}</span>}</td>
                     <td><span className={`status ${item.quantity === undefined ? 'status-unavailable' : low ? 'status-low' : 'status-ok'}`}>{item.quantity === undefined ? 'Count unavailable' : low ? 'Restock' : 'In stock'}</span></td>
+                    <td className="forecast-cell">
+                      {category === 'UTENSILS'
+                        ? 'Not applicable'
+                        : forecast?.daysUntilThreshold === null
+                          ? 'No sales in last 7 days'
+                          : forecast
+                            ? forecast.daysUntilThreshold === 0
+                              ? <span className="forecast-now" title={`Average usage: ${forecast.averageDailyUsage} ${unit} per day`}>Restock now</span>
+                              : <span title={`Average usage: ${forecast.averageDailyUsage} ${unit} per day`}>~{forecast.daysUntilThreshold} {forecast.daysUntilThreshold === 1 ? 'day' : 'days'}</span>
+                            : '—'}
+                    </td>
                   </tr>
                 })}</tbody>
               </table>
@@ -359,6 +406,8 @@ function App() {
             </div>}
           </section>
           <p className="manager-foot">Items at or below their threshold need restocking.</p>
+          </>
+          ) : <SalesReport />}
         </main>
       )}
     </div>

@@ -1,8 +1,11 @@
 package com.csce331.managers;
 
-import java.sql.Statement;
+import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Time;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -172,9 +175,7 @@ public class MenuItemManager extends DatabaseConnector {
         LocalTime sqlEndTime = endDate.toLocalTime();
         Map<LocalDate, Map<String, Double>> result = new HashMap<>();
 
-        try {
-            Statement salesStatement = this.createStatement();
-            String salesQuery =
+        String salesQuery =
                 "SELECT mi.name, o.order_date AS sale_date, " +
                 "SUM(om.quantity * mi.price) AS total_sales " +
                 "FROM order_menu AS om " +
@@ -182,18 +183,23 @@ public class MenuItemManager extends DatabaseConnector {
                 "ON om.order_id = o.id " +
                 "JOIN menu_items AS mi " +
                 "ON om.menu_item_id = mi.id " +
-                "WHERE o.order_date BETWEEN '" + sqlStartDate.toString() + "' " +
-                "AND '" + sqlEndDate.toString() + "' " +
-                "AND o.order_time BETWEEN '" + sqlStartTime.toString() + "' " +
-                "AND '" + sqlEndTime.toString() + "' " +
+                "WHERE o.order_date BETWEEN ? AND ? " +
+                "AND o.order_time BETWEEN ? AND ? " +
                 "GROUP BY mi.name, o.order_date;";
 
-            ResultSet salesResultSet = salesStatement.executeQuery(salesQuery);
-            while (salesResultSet.next()) {
-                LocalDate saleDate = salesResultSet.getDate("sale_date").toLocalDate();
-                result.putIfAbsent(saleDate, new HashMap<>());
-                result.get(saleDate)
-                    .put(salesResultSet.getString("name"), salesResultSet.getDouble("total_sales"));
+        try (PreparedStatement salesStatement = this.getConnection().prepareStatement(salesQuery)) {
+            salesStatement.setDate(1, Date.valueOf(sqlStartDate));
+            salesStatement.setDate(2, Date.valueOf(sqlEndDate));
+            salesStatement.setTime(3, Time.valueOf(sqlStartTime));
+            salesStatement.setTime(4, Time.valueOf(sqlEndTime));
+
+            try (ResultSet salesResultSet = salesStatement.executeQuery()) {
+                while (salesResultSet.next()) {
+                    LocalDate saleDate = salesResultSet.getDate("sale_date").toLocalDate();
+                    result.putIfAbsent(saleDate, new HashMap<>());
+                    result.get(saleDate)
+                        .put(salesResultSet.getString("name"), salesResultSet.getDouble("total_sales"));
+                }
             }
         } catch (SQLException e) {
             ExceptionLogger.logException(e);

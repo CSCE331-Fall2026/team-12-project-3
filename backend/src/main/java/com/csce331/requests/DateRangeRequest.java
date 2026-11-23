@@ -1,24 +1,22 @@
 package com.csce331.requests;
 
-import java.time.LocalDateTime;
-
 /**
  * Request body giving the date and time range a sales report covers.
  *
- * @param start the first date and time in the range
- * @param end the last date and time in the range
+ * @param start the first date and time in ISO-8601 format
+ * @param end the last date and time in ISO-8601 format
  */
-public record DateRangeRequest(LocalDateTime start, LocalDateTime end) {
+public record DateRangeRequest(String start, String end) {
     /**
-     * Creates the request, rejecting a range that ends before it starts.
+     * Creates the request, rejecting a missing date or time.
      *
-     * @param start the first date and time in the range
-     * @param end the last date and time in the range
-     * @throws IllegalArgumentException if {@code start} is after {@code end}
+     * @param start the first date and time in ISO-8601 format
+     * @param end the last date and time in ISO-8601 format
+     * @throws IllegalArgumentException if either value is missing
      */
     public DateRangeRequest {
-        if (start.isAfter(end)) {
-            throw new IllegalArgumentException("Start date must be before end date");
+        if (start == null || start.isBlank() || end == null || end.isBlank()) {
+            throw new IllegalArgumentException("Start and end date-times are required");
         }
     }
 }
