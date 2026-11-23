@@ -52,6 +52,7 @@ export default function ManagerScreen({ profile }: ManagerScreenProps) {
         {!inventory.loading && (
           <InventoryTable
             items={inventory.items}
+            forecasts={inventory.forecasts}
             category={inventory.category}
             editingItem={inventory.editingItem}
             restockQuantity={inventory.restockQuantity}
