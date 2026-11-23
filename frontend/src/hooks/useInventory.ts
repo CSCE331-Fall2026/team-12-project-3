@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 
-import { fetchInventoryItems, restockItem } from '../api/inventory'
-import type { InventoryCategory, InventoryItem } from '../types'
+import { fetchIngredientForecasts, fetchInventoryItems, restockItem } from '../api/inventory'
+import type { IngredientForecast, InventoryCategory, InventoryItem } from '../types'
 
 export function useInventory() {
   const [items, setItems] = useState<InventoryItem[]>([])
+  const [forecasts, setForecasts] = useState<Record<string, IngredientForecast>>({})
   const [category, setCategory] = useState<InventoryCategory>('FREEZER')
   const [loadedCategory, setLoadedCategory] = useState<InventoryCategory | null>(null)
   const [editingItem, setEditingItem] = useState<string | null>(null)
@@ -16,10 +17,14 @@ export function useInventory() {
   useEffect(() => {
     let active = true
 
-    fetchInventoryItems(category)
-      .then((data) => {
+    Promise.all([
+      fetchInventoryItems(category),
+      category === 'UTENSILS' ? Promise.resolve([]) : fetchIngredientForecasts(category),
+    ])
+      .then(([data, forecastData]) => {
         if (!active) return
         setItems(data)
+        setForecasts(Object.fromEntries(forecastData.map((forecast) => [forecast.name, forecast])))
         setError('')
       })
       .catch((cause: unknown) => {
@@ -37,6 +42,8 @@ export function useInventory() {
 
   const selectCategory = (nextCategory: InventoryCategory) => {
     setCategory(nextCategory)
+    setItems([])
+    setForecasts({})
     setEditingItem(null)
     setRestockQuantity('')
     setError('')
@@ -53,7 +60,12 @@ export function useInventory() {
     setError('')
     try {
       await restockItem(item.name, quantity, category === 'UTENSILS')
-      setItems(await fetchInventoryItems(category))
+      const [updatedItems, forecastData] = await Promise.all([
+        fetchInventoryItems(category),
+        category === 'UTENSILS' ? Promise.resolve([]) : fetchIngredientForecasts(category),
+      ])
+      setItems(updatedItems)
+      setForecasts(Object.fromEntries(forecastData.map((forecast) => [forecast.name, forecast])))
       setEditingItem(null)
       setRestockQuantity('')
     } catch (cause) {
@@ -65,6 +77,7 @@ export function useInventory() {
 
   return {
     items,
+    forecasts,
     category,
     selectCategory,
     editingItem,

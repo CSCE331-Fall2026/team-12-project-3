@@ -1,5 +1,7 @@
 package com.csce331.managers;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,6 +16,7 @@ import com.csce331.common.DatabaseConnector;
 import com.csce331.common.ExceptionLogger;
 
 import com.csce331.models.Ingredient;
+import com.csce331.models.IngredientForecast;
 import com.csce331.models.IngredientRestockData;
 import com.csce331.models.InventoryLocation;
 import com.csce331.models.Unit;
@@ -173,6 +176,76 @@ public class InventoryManager extends DatabaseConnector {
         }
 
         return ingredientsInLocation;
+    }
+
+    /**
+     * Estimates when each ingredient in a location will reach its restock
+     * threshold, based on ingredient usage in orders from the last seven
+     * calendar days.
+     *
+     * @param location the inventory location to forecast
+     * @return recent average daily usage and estimated days until threshold
+     * @throws SQLException if the database query fails
+     * @throws IllegalArgumentException if the location is {@code UTENSILS}
+     */
+    public List<IngredientForecast> getIngredientForecasts(InventoryLocation location)
+            throws SQLException {
+        if (location == InventoryLocation.UTENSILS) {
+            throw new IllegalArgumentException("Cannot forecast utensils");
+        }
+
+        List<IngredientForecast> forecasts = new ArrayList<>();
+        String forecastQuery =
+                "WITH current_stock AS ("
+                + "SELECT ingredient_id, SUM(quantity) AS total_quantity "
+                + "FROM inventory GROUP BY ingredient_id"
+                + "), recent_usage AS ("
+                + "SELECT mi.ingredient_id, SUM(mi.quantity * om.quantity) AS total_quantity "
+                + "FROM orders o "
+                + "JOIN order_menu om ON om.order_id = o.id "
+                + "JOIN menu_ingredients mi ON mi.menu_item_id = om.menu_item_id "
+                + "WHERE o.order_date BETWEEN CURRENT_DATE - 6 AND CURRENT_DATE "
+                + "GROUP BY mi.ingredient_id"
+                + ") "
+                + "SELECT i.name, i.restock_threshold, "
+                + "COALESCE(stock.total_quantity, 0) AS on_hand, "
+                + "COALESCE(usage.total_quantity, 0) AS weekly_usage "
+                + "FROM ingredients i "
+                + "LEFT JOIN current_stock stock ON stock.ingredient_id = i.id "
+                + "LEFT JOIN recent_usage usage ON usage.ingredient_id = i.id "
+                + "WHERE i.inventory_type = ?::inventory_location "
+                + "ORDER BY i.name";
+
+        try (PreparedStatement statement = this.getConnection().prepareStatement(forecastQuery)) {
+            statement.setString(1, location.name().toLowerCase());
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    BigDecimal weeklyUsage = resultSet.getBigDecimal("weekly_usage");
+                    BigDecimal averageDailyUsage =
+                            weeklyUsage.divide(BigDecimal.valueOf(7), 6, RoundingMode.HALF_UP);
+                    BigDecimal remainingToThreshold = resultSet.getBigDecimal("on_hand")
+                            .subtract(BigDecimal.valueOf(
+                                    resultSet.getInt("restock_threshold")));
+                    Long daysUntilThreshold = remainingToThreshold.signum() <= 0 ? 0L : null;
+                    if (weeklyUsage.signum() > 0) {
+                        if (remainingToThreshold.signum() > 0) {
+                            daysUntilThreshold = remainingToThreshold.multiply(BigDecimal.valueOf(7))
+                                    .divide(weeklyUsage, 0, RoundingMode.CEILING)
+                                    .longValueExact();
+                        }
+                    }
+                    forecasts.add(new IngredientForecast(
+                            resultSet.getString("name"),
+                            averageDailyUsage,
+                            daysUntilThreshold));
+                }
+            }
+        } catch (SQLException e) {
+            ExceptionLogger.logException(e);
+            throw e;
+        }
+
+        return forecasts;
     }
     
     /**
